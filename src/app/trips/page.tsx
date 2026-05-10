@@ -95,7 +95,10 @@ export default async function TripsPage({
           </p>
         ) : null}
 
-        <section className="mt-8 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
+        <section
+          id="new-trip"
+          className="mt-8 scroll-mt-24 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm"
+        >
           <h2 className="text-lg font-semibold text-[var(--travel-charcoal)]">
             New trip
           </h2>
