@@ -246,9 +246,17 @@ function SortableStopCard({
           )}
 
           <div>
-            <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
-              Activities
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+                Activities
+              </p>
+              <Link
+                href={`/trips/${tripId}/stops/${stop.id}/discover`}
+                className="text-xs font-bold text-[var(--travel-charcoal)] underline-offset-4 hover:underline"
+              >
+                Browse activity ideas
+              </Link>
+            </div>
             {stop.trip_activities.length === 0 ? (
               <p className="mt-2 text-sm text-stone-500">No activities yet — add one below.</p>
             ) : (

@@ -86,6 +86,14 @@ export function TripOverviewSections({
                   </div>
                 </summary>
                 <div className="border-t border-stone-100 px-4 py-3">
+                  <p className="mb-3 text-sm">
+                    <Link
+                      href={`/trips/${tripId}/stops/${s.id}/discover`}
+                      className="font-semibold text-stone-800 underline-offset-4 hover:underline"
+                    >
+                      Browse activity ideas for {s.city_name} →
+                    </Link>
+                  </p>
                   {s.activities.length === 0 ? (
                     <p className="text-sm text-stone-500">No activities for this section.</p>
                   ) : (
