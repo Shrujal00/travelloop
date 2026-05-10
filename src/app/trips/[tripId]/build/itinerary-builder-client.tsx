@@ -1,0 +1,450 @@
+"use client";
+
+import {
+  addTripActivity,
+  addTripStop,
+  deleteTripActivity,
+  deleteTripStop,
+  reorderTripStops,
+  updateTripActivity,
+  updateTripStop,
+} from "@/lib/trips/build-actions";
+import {
+  closestCenter,
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+
+export type BuilderActivityRow = {
+  id: string;
+  title: string;
+  starts_at: string | null;
+  cost: number | null;
+  category: string | null;
+};
+
+export type BuilderStopRow = {
+  id: string;
+  sort_order: number;
+  city_name: string;
+  start_date: string | null;
+  end_date: string | null;
+  trip_activities: BuilderActivityRow[];
+};
+
+export type BuilderTripPayload = {
+  id: string;
+  title: string;
+  place: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  trip_stops: BuilderStopRow[];
+};
+
+function formatForDatetimeLocal(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+const fieldClass =
+  "mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-[var(--travel-accent)] focus:ring-1 focus:ring-[var(--travel-accent)]/40";
+
+function SortableStopCard({
+  stop,
+  tripId,
+  tripStart,
+  tripEnd,
+  canDeleteStop,
+}: {
+  stop: BuilderStopRow;
+  tripId: string;
+  tripStart: string | null;
+  tripEnd: string | null;
+  canDeleteStop: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: stop.id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 1 : undefined,
+  };
+
+  return (
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={`rounded-2xl border border-stone-200 bg-white p-4 shadow-sm ${isDragging ? "opacity-90 shadow-md" : ""}`}
+    >
+      <div className="flex flex-wrap items-start gap-3">
+        <button
+          type="button"
+          className="mt-1 flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-lg border border-dashed border-stone-300 text-stone-500 hover:bg-stone-50 active:cursor-grabbing"
+          aria-label="Reorder stop"
+          {...attributes}
+          {...listeners}
+        >
+          ⋮⋮
+        </button>
+        <div className="min-w-0 flex-1 space-y-4">
+          <form action={updateTripStop} className="space-y-3 border-b border-stone-100 pb-4">
+            <input type="hidden" name="trip_id" value={tripId} />
+            <input type="hidden" name="stop_id" value={stop.id} />
+            <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+              City & dates
+            </p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="sm:col-span-1">
+                <label className="text-xs font-medium text-stone-600" htmlFor={`city-${stop.id}`}>
+                  City
+                </label>
+                <input
+                  id={`city-${stop.id}`}
+                  name="city_name"
+                  required
+                  maxLength={200}
+                  defaultValue={stop.city_name}
+                  className={fieldClass}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-stone-600" htmlFor={`sd-${stop.id}`}>
+                  Start
+                </label>
+                <input
+                  id={`sd-${stop.id}`}
+                  name="start_date"
+                  type="date"
+                  required
+                  min={tripStart ?? undefined}
+                  max={tripEnd ?? undefined}
+                  defaultValue={stop.start_date ?? ""}
+                  className={fieldClass}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-stone-600" htmlFor={`ed-${stop.id}`}>
+                  End
+                </label>
+                <input
+                  id={`ed-${stop.id}`}
+                  name="end_date"
+                  type="date"
+                  required
+                  min={tripStart ?? undefined}
+                  max={tripEnd ?? undefined}
+                  defaultValue={stop.end_date ?? ""}
+                  className={fieldClass}
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="rounded-lg bg-[var(--travel-accent)] px-3 py-1.5 text-xs font-semibold text-stone-900 hover:brightness-[0.98]"
+            >
+              Save stop
+            </button>
+          </form>
+          {canDeleteStop ? (
+            <form
+              action={deleteTripStop}
+              className="flex border-b border-stone-100 pb-4"
+              onSubmit={(e) => {
+                if (!confirm("Remove this stop and its activities?")) {
+                  e.preventDefault();
+                }
+              }}
+            >
+              <input type="hidden" name="trip_id" value={tripId} />
+              <input type="hidden" name="stop_id" value={stop.id} />
+              <button
+                type="submit"
+                className="rounded-lg border border-red-200 bg-white px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-50"
+              >
+                Remove stop
+              </button>
+            </form>
+          ) : null}
+
+          {canDeleteStop ? null : (
+            <p className="text-xs text-stone-500">At least one stop is required for each trip.</p>
+          )}
+
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
+              Activities
+            </p>
+            {stop.trip_activities.length === 0 ? (
+              <p className="mt-2 text-sm text-stone-500">No activities yet — add one below.</p>
+            ) : (
+              <ul className="mt-2 space-y-3">
+                {stop.trip_activities.map((a) => (
+                  <li
+                    key={a.id}
+                    className="rounded-xl border border-stone-100 bg-stone-50/80 p-3 text-sm"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="font-medium text-stone-800">{a.title}</span>
+                        <div className="mt-1 flex flex-wrap gap-x-3 text-xs text-stone-500">
+                          {a.starts_at ? (
+                            <span>{new Date(a.starts_at).toLocaleString()}</span>
+                          ) : (
+                            <span>No time set</span>
+                          )}
+                          {a.cost != null ? <span>${Number(a.cost).toFixed(2)}</span> : null}
+                          {a.category ? <span>{a.category}</span> : null}
+                        </div>
+                      </div>
+                      <form
+                        action={deleteTripActivity}
+                        className="shrink-0"
+                        onSubmit={(e) => {
+                          if (!confirm("Remove this activity?")) e.preventDefault();
+                        }}
+                      >
+                        <input type="hidden" name="trip_id" value={tripId} />
+                        <input type="hidden" name="activity_id" value={a.id} />
+                        <button
+                          type="submit"
+                          className="text-xs font-medium text-red-600 hover:underline"
+                        >
+                          Remove
+                        </button>
+                      </form>
+                    </div>
+                    <details className="mt-2">
+                      <summary className="cursor-pointer text-xs font-medium text-stone-600 hover:text-stone-900">
+                        Edit activity
+                      </summary>
+                      <form action={updateTripActivity} className="mt-2 space-y-2 border-t border-stone-200 pt-2">
+                        <input type="hidden" name="trip_id" value={tripId} />
+                        <input type="hidden" name="activity_id" value={a.id} />
+                        <input
+                          name="title"
+                          required
+                          maxLength={300}
+                          defaultValue={a.title}
+                          className={fieldClass}
+                          placeholder="Title"
+                        />
+                        <input
+                          name="starts_at"
+                          type="datetime-local"
+                          defaultValue={formatForDatetimeLocal(a.starts_at)}
+                          className={fieldClass}
+                        />
+                        <input
+                          name="cost"
+                          type="number"
+                          min={0}
+                          step="0.01"
+                          defaultValue={a.cost != null ? String(a.cost) : ""}
+                          className={fieldClass}
+                          placeholder="Cost (optional)"
+                        />
+                        <input
+                          name="category"
+                          maxLength={120}
+                          defaultValue={a.category ?? ""}
+                          className={fieldClass}
+                          placeholder="Category (optional)"
+                        />
+                        <button
+                          type="submit"
+                          className="rounded-lg border border-stone-300 bg-white px-2 py-1 text-xs font-medium text-stone-800 hover:bg-stone-50"
+                        >
+                          Save activity
+                        </button>
+                      </form>
+                    </details>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            <form action={addTripActivity} className="mt-3 space-y-2 rounded-xl border border-dashed border-stone-300 bg-white/60 p-3">
+              <input type="hidden" name="trip_id" value={tripId} />
+              <input type="hidden" name="stop_id" value={stop.id} />
+              <p className="text-xs font-medium text-stone-600">Add activity</p>
+              <input name="title" required maxLength={300} className={fieldClass} placeholder="Title" />
+              <input name="starts_at" type="datetime-local" className={fieldClass} />
+              <input
+                name="cost"
+                type="number"
+                min={0}
+                step="0.01"
+                className={fieldClass}
+                placeholder="Cost (optional)"
+              />
+              <input name="category" maxLength={120} className={fieldClass} placeholder="Category (optional)" />
+              <button
+                type="submit"
+                className="rounded-lg bg-stone-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-700"
+              >
+                Add activity
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </li>
+  );
+}
+
+export function ItineraryBuilderClient({ trip }: { trip: BuilderTripPayload }) {
+  const router = useRouter();
+  const sorted = useMemo(
+    () => [...trip.trip_stops].sort((a, b) => a.sort_order - b.sort_order),
+    [trip.trip_stops]
+  );
+
+  const stopsVersion = useMemo(
+    () =>
+      sorted
+        .map(
+          (s) =>
+            `${s.id}:${s.sort_order}:${s.city_name}:${s.trip_activities.map((a) => a.id).join(".")}`
+        )
+        .join("|"),
+    [sorted]
+  );
+
+  const [items, setItems] = useState<BuilderStopRow[]>(sorted);
+
+  useEffect(() => {
+    setItems([...trip.trip_stops].sort((a, b) => a.sort_order - b.sort_order));
+  }, [stopsVersion, trip.trip_stops]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = items.findIndex((s) => s.id === active.id);
+    const newIndex = items.findIndex((s) => s.id === over.id);
+    if (oldIndex < 0 || newIndex < 0) return;
+    const previous = items;
+    const next = arrayMove(items, oldIndex, newIndex);
+    setItems(next);
+    const res = await reorderTripStops(trip.id, next.map((s) => s.id));
+    if (res.error) {
+      setItems(previous);
+      window.alert(res.error);
+    }
+    router.refresh();
+  }
+
+  const tripStart = trip.start_date;
+  const tripEnd = trip.end_date;
+  const canAddStop = Boolean(tripStart && tripEnd);
+
+  return (
+    <div className="space-y-8">
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={items.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+          <ol className="space-y-4">
+            {items.map((stop) => (
+              <SortableStopCard
+                key={stop.id}
+                stop={stop}
+                tripId={trip.id}
+                tripStart={tripStart}
+                tripEnd={tripEnd}
+                canDeleteStop={items.length > 1}
+              />
+            ))}
+          </ol>
+        </SortableContext>
+      </DndContext>
+
+      <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
+        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Add stop</h2>
+        {!canAddStop ? (
+          <p className="mt-2 text-sm text-stone-600">
+            Set trip start and end dates on{" "}
+            <Link href={`/trips/${trip.id}/edit`} className="font-medium underline underline-offset-2">
+              Edit trip
+            </Link>{" "}
+            before adding another stop.
+          </p>
+        ) : (
+          <form action={addTripStop} className="mt-4 space-y-3">
+            <input type="hidden" name="trip_id" value={trip.id} />
+            <div>
+              <label className="text-xs font-medium text-stone-600" htmlFor="new-city">
+                City
+              </label>
+              <input id="new-city" name="city_name" required maxLength={200} className={fieldClass} />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="text-xs font-medium text-stone-600" htmlFor="new-sd">
+                  Start
+                </label>
+                <input
+                  id="new-sd"
+                  name="start_date"
+                  type="date"
+                  required
+                  min={tripStart ?? undefined}
+                  max={tripEnd ?? undefined}
+                  className={fieldClass}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-stone-600" htmlFor="new-ed">
+                  End
+                </label>
+                <input
+                  id="new-ed"
+                  name="end_date"
+                  type="date"
+                  required
+                  min={tripStart ?? undefined}
+                  max={tripEnd ?? undefined}
+                  className={fieldClass}
+                />
+              </div>
+            </div>
+            <button
+              type="submit"
+              className="rounded-lg bg-[var(--travel-accent)] px-4 py-2 text-sm font-semibold text-stone-900 shadow-sm hover:brightness-[0.97]"
+            >
+              Add stop
+            </button>
+          </form>
+        )}
+      </section>
+
+      <p className="text-center text-sm text-stone-500">
+        <Link href={`/trips/${trip.id}`} className="font-medium text-stone-700 underline-offset-4 hover:underline">
+          ← Trip overview
+        </Link>
+      </p>
+    </div>
+  );
+}
