@@ -2,11 +2,144 @@
 
 /* Traveloop design tokens (accent matches brand brief) */
 :root {
-  --background: #fafaf9;
+  --background: #f7f5f0;
   --foreground: #1c1917;
   --travel-accent: #f4b41a;
   --travel-charcoal: #292524;
   --travel-teal: #0d9488;
+  --travel-paper: #f7f5f0;
+}
+
+@keyframes travel-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes travel-hero-shift {
+  0%,
+  100% {
+    background-position: 0% 45%;
+  }
+  50% {
+    background-position: 100% 55%;
+  }
+}
+
+@keyframes travel-float-soft {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes travel-fab-glow {
+  0%,
+  100% {
+    box-shadow:
+      0 18px 42px -14px rgba(244, 180, 26, 0.55),
+      0 8px 24px -12px rgba(0, 0, 0, 0.35);
+  }
+  50% {
+    box-shadow:
+      0 22px 48px -12px rgba(244, 180, 26, 0.65),
+      0 12px 28px -10px rgba(0, 0, 0, 0.4);
+  }
+}
+
+.travel-animate-in {
+  animation: travel-fade-up 0.72s cubic-bezier(0.22, 1, 0.32, 1) forwards;
+  opacity: 0;
+}
+
+.travel-delay-1 {
+  animation-delay: 0.05s;
+}
+.travel-delay-2 {
+  animation-delay: 0.12s;
+}
+.travel-delay-3 {
+  animation-delay: 0.2s;
+}
+.travel-delay-4 {
+  animation-delay: 0.28s;
+}
+
+.travel-hero-mesh {
+  background:
+    radial-gradient(ellipse 120% 85% at 18% -12%, rgba(244, 180, 26, 0.38), transparent 52%),
+    radial-gradient(ellipse 95% 65% at 92% 18%, rgba(13, 148, 136, 0.28), transparent 48%),
+    linear-gradient(168deg, #141211 0%, #292524 42%, #0c0a09 100%);
+  background-size: 200% 200%;
+  animation: travel-hero-shift 20s ease-in-out infinite;
+}
+
+.travel-noise {
+  background-image: repeating-linear-gradient(
+    -8deg,
+    transparent,
+    transparent 3px,
+    rgba(255, 255, 255, 0.025) 3px,
+    rgba(255, 255, 255, 0.025) 6px
+  );
+}
+
+.travel-float {
+  animation: travel-float-soft 5.5s ease-in-out infinite;
+}
+
+.travel-card-lift {
+  transition:
+    transform 0.38s cubic-bezier(0.22, 1, 0.32, 1),
+    box-shadow 0.38s ease;
+}
+
+.travel-card-lift:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 22px 48px -18px rgba(41, 37, 36, 0.38);
+}
+
+.travel-fab {
+  animation:
+    travel-fade-up 0.55s ease forwards 0.15s,
+    travel-fab-glow 3.8s ease-in-out infinite 0.8s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .travel-animate-in,
+  .travel-fab {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+
+  .travel-hero-mesh {
+    animation: none !important;
+    background-position: center;
+  }
+
+  .travel-float {
+    animation: none !important;
+  }
+
+  .travel-card-lift {
+    transition: none;
+  }
+
+  .travel-card-lift:hover {
+    transform: none;
+  }
+
+  .travel-fab {
+    box-shadow: 0 14px 36px -12px rgba(0, 0, 0, 0.35);
+  }
 }
 
 @theme inline {
