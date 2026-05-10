@@ -1,10 +1,6 @@
 import { ItineraryViewClient } from "@/app/trips/[tripId]/itinerary/itinerary-view-client";
-import {
-  buildCalendarCells,
-  buildItineraryDays,
-  type SourceActivity,
-  type SourceStop,
-} from "@/lib/trips/itinerary-day-buckets";
+import { buildCalendarCells, buildItineraryDays } from "@/lib/trips/itinerary-day-buckets";
+import { normalizeStopsForItinerary } from "@/lib/trips/normalize-itinerary-stops";
 import { createClient } from "@/lib/supabase/server";
 import { isUuidTripParam } from "@/lib/trips/trip-id";
 import Link from "next/link";
@@ -18,42 +14,6 @@ type TripRaw = {
   end_date: string | null;
   trip_stops?: unknown;
 };
-
-function normalizeStops(raw: unknown): SourceStop[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .map((row) => {
-      const r = row as Record<string, unknown>;
-      const actsRaw = r.trip_activities;
-      const actsArr = Array.isArray(actsRaw) ? actsRaw : [];
-      const activities: SourceActivity[] = actsArr.map((a) => {
-        const ar = a as Record<string, unknown>;
-        const costRaw = ar.cost;
-        const cost =
-          costRaw == null || costRaw === ""
-            ? null
-            : typeof costRaw === "number"
-              ? costRaw
-              : Number(costRaw);
-        return {
-          id: String(ar.id ?? ""),
-          title: String(ar.title ?? ""),
-          starts_at: ar.starts_at != null ? String(ar.starts_at) : null,
-          cost: Number.isFinite(cost as number) ? (cost as number) : null,
-        };
-      });
-      return {
-        id: String(r.id ?? ""),
-        sort_order: typeof r.sort_order === "number" ? r.sort_order : Number(r.sort_order ?? 0),
-        city_name: String(r.city_name ?? "").trim() || "Untitled stop",
-        start_date: r.start_date != null ? String(r.start_date) : null,
-        end_date: r.end_date != null ? String(r.end_date) : null,
-        activities,
-      };
-    })
-    .filter((s) => s.id.length > 0)
-    .sort((a, b) => a.sort_order - b.sort_order);
-}
 
 export default async function ItineraryViewPage({ params }: { params: Promise<{ tripId: string }> }) {
   const { tripId } = await params;
@@ -94,7 +54,7 @@ export default async function ItineraryViewPage({ params }: { params: Promise<{ 
   }
 
   const row = trip as TripRaw;
-  const stops = normalizeStops(row.trip_stops);
+  const stops = normalizeStopsForItinerary(row.trip_stops);
   const displayName = row.place?.trim() || row.title;
   const ts = row.start_date?.trim().slice(0, 10) ?? null;
   const te = row.end_date?.trim().slice(0, 10) ?? null;
@@ -102,13 +62,11 @@ export default async function ItineraryViewPage({ params }: { params: Promise<{ 
   if (!ts || !te) {
     return (
       <main className="mx-auto max-w-3xl px-6 py-10">
-        <p className="text-sm font-medium uppercase tracking-wide text-stone-500">Itinerary view</p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
+        <h1 className="text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
           Day-by-day plan
         </h1>
         <p className="mt-4 max-w-xl text-stone-600">
-          Add a trip start and end date first — then this page shows every day in range with activities
-          grouped under each stop&apos;s city.
+          Add trip start and end dates to see your schedule here.
         </p>
         <Link
           href={`/trips/${tripId}/edit`}
@@ -129,14 +87,9 @@ export default async function ItineraryViewPage({ params }: { params: Promise<{ 
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <p className="text-sm font-medium uppercase tracking-wide text-stone-500">Phase C · Itinerary view</p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
+      <h1 className="text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
         Day-by-day plan
       </h1>
-      <p className="mt-2 max-w-xl text-sm text-stone-600">
-        List view walks each day in order with a city header. Calendar view is a compact week grid with
-        dots for days that have activities. Activities without a time use the stop start date.
-      </p>
 
       <div className="mt-8">
         <ItineraryViewClient
