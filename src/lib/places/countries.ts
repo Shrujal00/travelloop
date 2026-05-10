@@ -1,4 +1,8 @@
-import { getNames } from "i18n-iso-countries";
+import enLocale from "i18n-iso-countries/langs/en.json";
+import { getNames, registerLocale } from "i18n-iso-countries";
+
+/** v7+ requires registering locale data before getNames("en") returns anything. */
+registerLocale(enLocale);
 
 export type CountryOption = { code: string; name: string };
 
