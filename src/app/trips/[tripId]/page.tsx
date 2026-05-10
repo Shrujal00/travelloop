@@ -149,9 +149,15 @@ export default async function TripOverviewPage({
         </div>
       </dl>
 
-      <TripOverviewSections stops={stops} />
+      <TripOverviewSections tripId={tripId} stops={stops} />
 
       <nav className="mt-8 flex flex-wrap items-center gap-3">
+        <Link
+          href={`/trips/${tripId}/itinerary`}
+          className="inline-flex items-center justify-center rounded-lg bg-stone-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-stone-800"
+        >
+          Itinerary view
+        </Link>
         <Link
           href={`/trips/${tripId}/edit`}
           className="inline-flex items-center justify-center rounded-lg bg-[var(--travel-accent)] px-4 py-2 text-sm font-semibold text-stone-900 shadow-sm transition hover:brightness-[0.97]"

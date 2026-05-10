@@ -142,6 +142,12 @@ export function TripItineraryCollapsible({ trip }: { trip: DashboardTripForColla
             Overview
           </Link>
           <Link
+            href={`/trips/${trip.id}/itinerary`}
+            className="inline-flex rounded-lg border border-stone-300 bg-stone-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-stone-800"
+          >
+            Itinerary view
+          </Link>
+          <Link
             href={`/trips/${trip.id}/build`}
             className="inline-flex rounded-lg bg-[var(--travel-accent)] px-3 py-1.5 text-xs font-semibold text-stone-900 shadow-sm hover:brightness-[0.97]"
           >

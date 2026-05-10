@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type ActivityRow = {
   id: string;
   title: string;
@@ -28,7 +30,13 @@ function sumCosts(activities: ActivityRow[]): number {
   }, 0);
 }
 
-export function TripOverviewSections({ stops }: { stops: OverviewStopRow[] }) {
+export function TripOverviewSections({
+  stops,
+  tripId,
+}: {
+  stops: OverviewStopRow[];
+  tripId: string;
+}) {
   if (stops.length === 0) {
     return (
       <section className="mt-8 rounded-2xl border border-dashed border-stone-300 bg-stone-50/60 px-5 py-8 text-center text-sm text-stone-600">
@@ -40,7 +48,15 @@ export function TripOverviewSections({ stops }: { stops: OverviewStopRow[] }) {
 
   return (
     <section className="mt-8">
-      <h2 className="text-lg font-semibold text-[var(--travel-charcoal)]">Itinerary sections</h2>
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <h2 className="text-lg font-semibold text-[var(--travel-charcoal)]">Itinerary sections</h2>
+        <Link
+          href={`/trips/${tripId}/itinerary`}
+          className="text-xs font-semibold text-stone-700 underline-offset-4 hover:underline"
+        >
+          Open day-by-day view →
+        </Link>
+      </div>
       <p className="mt-1 text-sm text-stone-600">
         Each stop is a leg of your trip — expand to see activities you added in the builder.
       </p>

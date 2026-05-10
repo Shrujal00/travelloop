@@ -500,6 +500,13 @@ export function ItineraryBuilderClient({ trip }: { trip: BuilderTripPayload }) {
         <Link href={`/trips/${trip.id}`} className="font-medium text-stone-700 underline-offset-4 hover:underline">
           ← Trip overview
         </Link>
+        {" · "}
+        <Link
+          href={`/trips/${trip.id}/itinerary`}
+          className="font-medium text-stone-700 underline-offset-4 hover:underline"
+        >
+          Itinerary view
+        </Link>
       </p>
     </div>
   );

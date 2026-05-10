@@ -7,4 +7,5 @@ export function revalidateTripPaths(tripId: string) {
   revalidatePath(`/trips/${tripId}`);
   revalidatePath(`/trips/${tripId}/edit`);
   revalidatePath(`/trips/${tripId}/build`);
+  revalidatePath(`/trips/${tripId}/itinerary`);
 }
