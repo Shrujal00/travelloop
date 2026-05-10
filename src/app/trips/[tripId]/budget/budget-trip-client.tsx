@@ -1,10 +1,20 @@
 "use client";
 
+import {
+  BudgetCategoryPercentBars,
+  BudgetCategoryPieChart,
+  CATEGORY_CHART_COLORS,
+} from "@/components/budget-charts";
 import { addTripExpense, deleteTripExpense } from "@/lib/trips/budget-actions";
-import type { BudgetBreakdownRow, BudgetRollup, TripExpenseCategory } from "@/lib/trips/budget-rollups";
+import type {
+  BudgetBreakdownRow,
+  BudgetRollup,
+  DailySpendRow,
+  TripExpenseCategory,
+} from "@/lib/trips/budget-rollups";
 import { EXPENSE_CATEGORY_LABELS } from "@/lib/trips/budget-rollups";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useId, useMemo } from "react";
 
 export type BudgetExpenseRow = {
   id: string;
@@ -18,6 +28,20 @@ function fmtUsd(n: number): string {
   return `$${n.toFixed(2)}`;
 }
 
+function fmtTripDayUtc(ymd: string): string {
+  const m = ymd.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return ymd;
+  const y = Number(m[1]);
+  const mo = Number(m[2]);
+  const d = Number(m[3]);
+  return new Date(Date.UTC(y, mo - 1, d)).toLocaleDateString(undefined, {
+    weekday: "short",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 const fieldClass =
   "mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-[var(--travel-accent)] focus:ring-1 focus:ring-[var(--travel-accent)]/40";
 
@@ -27,6 +51,7 @@ export function BudgetTripClient({
   dailyBudgetCap,
   rollup,
   breakdown,
+  dailySpend,
   expenses,
   initialError,
 }: {
@@ -35,10 +60,16 @@ export function BudgetTripClient({
   dailyBudgetCap: number | null;
   rollup: BudgetRollup;
   breakdown: BudgetBreakdownRow[];
+  dailySpend: DailySpendRow[];
   expenses: BudgetExpenseRow[];
   initialError: string | null;
 }) {
-  const maxBar = useMemo(() => Math.max(...breakdown.map((r) => r.amount), 1), [breakdown]);
+  const pieTitleId = useId();
+
+  const overBudgetDays = useMemo(() => {
+    if (dailyBudgetCap == null || dailyBudgetCap <= 0) return [];
+    return dailySpend.filter((d) => d.total > dailyBudgetCap + 0.005);
+  }, [dailyBudgetCap, dailySpend]);
 
   const overCap =
     dailyBudgetCap != null &&
@@ -53,6 +84,29 @@ export function BudgetTripClient({
         <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
           {initialError}
         </p>
+      ) : null}
+
+      {overBudgetDays.length > 0 && dailyBudgetCap != null && dailyBudgetCap > 0 ? (
+        <div
+          role="alert"
+          aria-live="polite"
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900 shadow-sm"
+        >
+          <p className="font-semibold text-red-950">Over soft budget on these days</p>
+          <p className="mt-1 text-red-800/95">
+            Daily spend exceeds your cap of {fmtUsd(dailyBudgetCap)} (set on Edit trip).
+          </p>
+          <ul className="mt-3 list-inside list-disc space-y-1 font-medium">
+            {overBudgetDays.map((d) => {
+              const overAmt = Math.max(0, Math.round((d.total - dailyBudgetCap) * 100) / 100);
+              return (
+                <li key={d.date}>
+                  {fmtTripDayUtc(d.date)} · {fmtUsd(d.total)} ({fmtUsd(overAmt)} over cap)
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       ) : null}
 
       {overCap ? (
@@ -103,28 +157,45 @@ export function BudgetTripClient({
       </section>
 
       <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
-        <h2 className="text-sm font-bold uppercase tracking-wide text-stone-500">By category</h2>
+        <h2 className="text-sm font-bold uppercase tracking-wide text-stone-500">
+          Cost breakdown &amp; charts
+        </h2>
+        <p className="mt-1 text-xs text-stone-600">
+          Pie and bar charts show each category&apos;s share of estimated total spend.
+        </p>
         {breakdown.length === 0 ? (
           <p className="mt-4 text-sm text-stone-600">
             No costs yet — add prices to activities in the builder or log an expense.
           </p>
         ) : (
-          <ul className="mt-4 space-y-4">
-            {breakdown.map((row) => (
-              <li key={row.key}>
-                <div className="flex items-center justify-between gap-3 text-sm">
-                  <span className="font-medium text-stone-800">{row.label}</span>
-                  <span className="font-semibold text-stone-900">{fmtUsd(row.amount)}</span>
-                </div>
-                <div className="mt-2 h-2 overflow-hidden rounded-full bg-stone-100">
-                  <div
-                    className="h-full rounded-full bg-[var(--travel-accent)]"
-                    style={{ width: `${Math.min(100, (row.amount / maxBar) * 100)}%` }}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-6 flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
+            <div className="flex shrink-0 flex-col items-center gap-4 sm:flex-row sm:items-start">
+              <BudgetCategoryPieChart
+                breakdown={breakdown}
+                grandTotal={rollup.grandTotal}
+                labelledById={pieTitleId}
+              />
+              <ul className="flex flex-col gap-2 text-sm" aria-label="Category legend">
+                {breakdown.map((row) => (
+                  <li key={row.key} className="flex items-center gap-2">
+                    <span
+                      className="size-3 shrink-0 rounded-sm"
+                      style={{ backgroundColor: CATEGORY_CHART_COLORS[row.key] ?? "#78716c" }}
+                      aria-hidden
+                    />
+                    <span className="text-stone-800">{row.label}</span>
+                    <span className="tabular-nums font-semibold text-stone-900">{fmtUsd(row.amount)}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div className="min-w-0 flex-1">
+              <h3 className="text-xs font-bold uppercase tracking-wide text-stone-400">Share of total</h3>
+              <div className="mt-3">
+                <BudgetCategoryPercentBars breakdown={breakdown} grandTotal={rollup.grandTotal} />
+              </div>
+            </div>
+          </div>
         )}
       </section>
 
