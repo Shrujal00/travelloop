@@ -1,20 +1,58 @@
 import { TripDeleteForm } from "@/app/trips/trip-delete-form";
+import {
+  TripOverviewSections,
+  type OverviewStopRow,
+} from "@/components/trip-overview-sections";
 import { createClient } from "@/lib/supabase/server";
 import { isUuidTripParam } from "@/lib/trips/trip-id";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-type TripStopCount = { count: number };
-
-type TripDetail = {
+type TripDetailRaw = {
   id: string;
   title: string;
   place: string | null;
   start_date: string | null;
   end_date: string | null;
   created_at: string;
-  trip_stops?: TripStopCount[] | null;
+  trip_stops?: unknown;
 };
+
+function normalizeOverviewStops(raw: unknown): OverviewStopRow[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((row) => {
+      const r = row as Record<string, unknown>;
+      const actsRaw = r.trip_activities;
+      const actsArr = Array.isArray(actsRaw) ? actsRaw : [];
+      const activities = actsArr.map((a) => {
+        const ar = a as Record<string, unknown>;
+        const costRaw = ar.cost;
+        const cost =
+          costRaw == null || costRaw === ""
+            ? null
+            : typeof costRaw === "number"
+              ? costRaw
+              : Number(costRaw);
+        return {
+          id: String(ar.id ?? ""),
+          title: String(ar.title ?? ""),
+          cost: Number.isFinite(cost as number) ? (cost as number) : null,
+          starts_at: ar.starts_at != null ? String(ar.starts_at) : null,
+        };
+      });
+      return {
+        id: String(r.id ?? ""),
+        sort_order: typeof r.sort_order === "number" ? r.sort_order : Number(r.sort_order ?? 0),
+        city_name: String(r.city_name ?? "").trim() || "Untitled stop",
+        start_date: r.start_date != null ? String(r.start_date) : null,
+        end_date: r.end_date != null ? String(r.end_date) : null,
+        activities,
+      };
+    })
+    .filter((s) => s.id.length > 0)
+    .sort((a, b) => a.sort_order - b.sort_order);
+}
 
 export default async function TripOverviewPage({
   params,
@@ -29,7 +67,29 @@ export default async function TripOverviewPage({
   const supabase = await createClient();
   const { data: trip, error } = await supabase
     .from("trips")
-    .select("id, title, place, start_date, end_date, created_at, trip_stops(count)")
+    .select(
+      `
+      id,
+      title,
+      place,
+      start_date,
+      end_date,
+      created_at,
+      trip_stops (
+        id,
+        sort_order,
+        city_name,
+        start_date,
+        end_date,
+        trip_activities (
+          id,
+          title,
+          cost,
+          starts_at
+        )
+      )
+    `
+    )
     .eq("id", tripId)
     .maybeSingle();
 
@@ -37,6 +97,7 @@ export default async function TripOverviewPage({
     const msg = error.message ?? "";
     if (
       msg.includes("trip_stops") ||
+      msg.includes("trip_activities") ||
       msg.includes("schema cache") ||
       error.code === "PGRST200"
     ) {
@@ -54,17 +115,8 @@ export default async function TripOverviewPage({
     notFound();
   }
 
-  const row = trip as TripDetail;
-  const stopCountRaw = row.trip_stops?.[0]?.count;
-  const stopCount =
-    typeof stopCountRaw === "number"
-      ? stopCountRaw
-      : typeof stopCountRaw === "string"
-        ? Number(stopCountRaw)
-        : row.place
-          ? 1
-          : 0;
-
+  const row = trip as TripDetailRaw;
+  const stops = normalizeOverviewStops(row.trip_stops);
   const displayName = row.place?.trim() || row.title;
 
   return (
@@ -92,10 +144,12 @@ export default async function TripOverviewPage({
             Destinations
           </dt>
           <dd className="mt-1 text-stone-800">
-            {stopCount} {stopCount === 1 ? "stop" : "stops"}
+            {stops.length} {stops.length === 1 ? "stop" : "stops"}
           </dd>
         </div>
       </dl>
+
+      <TripOverviewSections stops={stops} />
 
       <nav className="mt-8 flex flex-wrap items-center gap-3">
         <Link
