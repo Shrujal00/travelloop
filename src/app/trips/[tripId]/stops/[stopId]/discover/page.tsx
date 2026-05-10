@@ -1,4 +1,5 @@
 import { DiscoverClient } from "./discover-client";
+import { englishOfficialCountryName } from "@/lib/places/countries";
 import { createClient } from "@/lib/supabase/server";
 import { isUuidTripParam } from "@/lib/trips/trip-id";
 import Link from "next/link";
@@ -37,6 +38,7 @@ export default async function StopDiscoverPage({
       `
       id,
       city_name,
+      country,
       trips (
         id,
         title
@@ -58,19 +60,16 @@ export default async function StopDiscoverPage({
   }
 
   const cityName = String(data.city_name ?? "").trim() || "Stop";
+  const stopCountry =
+    data.country != null && String(data.country).trim()
+      ? englishOfficialCountryName(String(data.country))
+      : null;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <p className="text-sm font-medium uppercase tracking-wide text-stone-500">
-        Phase E · Activity discover
-      </p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
+      <h1 className="text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
         Browse activity ideas
       </h1>
-      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-stone-600">
-        Free points of interest from OpenStreetMap around this stop (with optional Wikipedia
-        titles). Filter and sort on your device — then add anything you like to your itinerary.
-      </p>
       <p className="mt-4 text-sm">
         <Link
           href={`/trips/${tripId}/build`}
@@ -93,26 +92,10 @@ export default async function StopDiscoverPage({
           stopId={stopId}
           tripTitle={tripRow.title}
           stopCityName={cityName}
+          stopCountryLabel={stopCountry}
           initialError={initialError}
         />
       </div>
-
-      <p className="mt-10 text-center text-[11px] leading-relaxed text-stone-400">
-        Data ©{" "}
-        <a
-          href="https://www.openstreetmap.org/copyright"
-          className="underline underline-offset-2"
-          target="_blank"
-          rel="noreferrer"
-        >
-          OpenStreetMap
-        </a>{" "}
-        contributors,{" "}
-        <a href="https://opendatacommons.org/licenses/odbl/" className="underline underline-offset-2" target="_blank" rel="noreferrer">
-          ODbL
-        </a>
-        . Please use results fairly; queries are cached on the server.
-      </p>
     </main>
   );
 }
