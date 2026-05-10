@@ -10,6 +10,8 @@ Personalized travel planning made easy — **Next.js 16** (App Router) and **Sup
    cp .env.example .env.local
    ```
 
+   Keep secrets only in **`.env.local`** (gitignored). Avoid typo filenames like `e.nv`; this repo ignores `e.nv` so it is never committed by mistake.
+
 2. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (or `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`) from your [Supabase project API settings](https://supabase.com/dashboard/project/_/settings/api).
 
 3. In Supabase **Authentication → URL configuration**, add:

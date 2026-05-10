@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+# common env filename typos (never commit secrets)
+e.nv
 
 # debug
 npm-debug.log*
