@@ -27,6 +27,16 @@ function parseTripId(raw: unknown): string | null {
   return id;
 }
 
+function parseOptionalBudgetCap(raw: unknown): number | null {
+  if (raw === null || raw === undefined) return null;
+  if (typeof raw !== "string") return null;
+  const s = raw.trim();
+  if (!s) return null;
+  const n = Number(s);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.round(n * 100) / 100;
+}
+
 export async function createTrip(formData: FormData) {
   const session = await getVerifiedSession();
   if (!session) {
@@ -139,6 +149,7 @@ export async function updateTrip(formData: FormData) {
   }
 
   const title = place.slice(0, 200);
+  const daily_budget_cap = parseOptionalBudgetCap(formData.get("daily_budget_cap"));
   const supabase = await createClient();
 
   const { error: tripErr } = await supabase
@@ -148,6 +159,7 @@ export async function updateTrip(formData: FormData) {
       place,
       start_date: start,
       end_date: end,
+      daily_budget_cap,
       updated_at: new Date().toISOString(),
     })
     .eq("id", tripId)
