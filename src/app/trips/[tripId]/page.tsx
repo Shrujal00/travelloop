@@ -3,6 +3,8 @@ import {
   TripOverviewSections,
   type OverviewStopRow,
 } from "@/components/trip-overview-sections";
+import { TripSharingPanel } from "@/components/trip-sharing-panel";
+import { getPublicSiteUrl } from "@/lib/app-origin";
 import { createClient } from "@/lib/supabase/server";
 import { isUuidTripParam } from "@/lib/trips/trip-id";
 import Link from "next/link";
@@ -15,6 +17,8 @@ type TripDetailRaw = {
   start_date: string | null;
   end_date: string | null;
   created_at: string;
+  is_public?: boolean | null;
+  public_slug?: string | null;
   trip_stops?: unknown;
 };
 
@@ -54,12 +58,26 @@ function normalizeOverviewStops(raw: unknown): OverviewStopRow[] {
     .sort((a, b) => a.sort_order - b.sort_order);
 }
 
+function decodeParam(raw: string | undefined): string | null {
+  if (!raw) return null;
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw;
+  }
+}
+
 export default async function TripOverviewPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ tripId: string }>;
+  searchParams: Promise<{ share?: string; share_error?: string }>;
 }) {
   const { tripId } = await params;
+  const sp = await searchParams;
+  const shareStatus = decodeParam(sp.share);
+  const shareError = decodeParam(sp.share_error);
   if (!isUuidTripParam(tripId)) {
     notFound();
   }
@@ -75,6 +93,8 @@ export default async function TripOverviewPage({
       start_date,
       end_date,
       created_at,
+      is_public,
+      public_slug,
       trip_stops (
         id,
         sort_order,
@@ -98,6 +118,8 @@ export default async function TripOverviewPage({
     if (
       msg.includes("trip_stops") ||
       msg.includes("trip_activities") ||
+      msg.includes("is_public") ||
+      msg.includes("public_slug") ||
       msg.includes("schema cache") ||
       error.code === "PGRST200"
     ) {
@@ -118,6 +140,22 @@ export default async function TripOverviewPage({
   const row = trip as TripDetailRaw;
   const stops = normalizeOverviewStops(row.trip_stops);
   const displayName = row.place?.trim() || row.title;
+  const isPublic = Boolean(row.is_public);
+  const publicSlug =
+    typeof row.public_slug === "string" && row.public_slug.trim()
+      ? row.public_slug.trim()
+      : null;
+  const shareUrl =
+    isPublic && publicSlug ? `${getPublicSiteUrl()}/p/${publicSlug}` : null;
+
+  const shareBanner =
+    shareStatus === "enabled"
+      ? "Sharing is on — copy the link below for guests."
+      : shareStatus === "disabled"
+        ? "Sharing is off. Guests can no longer open the old link."
+        : shareStatus === "rotated"
+          ? "Share link rotated — share the new URL below."
+          : null;
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
@@ -127,6 +165,21 @@ export default async function TripOverviewPage({
       <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
         {displayName}
       </h1>
+
+      {shareBanner ? (
+        <p
+          className="mt-6 rounded-lg border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900"
+          role="status"
+        >
+          {shareBanner}
+        </p>
+      ) : null}
+
+      {shareError ? (
+        <p className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">
+          {shareError}
+        </p>
+      ) : null}
 
       <dl className="mt-8 grid gap-4 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm sm:grid-cols-2">
         <div>
@@ -148,6 +201,8 @@ export default async function TripOverviewPage({
           </dd>
         </div>
       </dl>
+
+      <TripSharingPanel tripId={tripId} isPublic={isPublic} shareUrl={shareUrl} />
 
       <TripOverviewSections tripId={tripId} stops={stops} />
 
