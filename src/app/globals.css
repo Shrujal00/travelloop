@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
+/* Traveloop design tokens (accent matches brand brief) */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafaf9;
+  --foreground: #1c1917;
+  --travel-accent: #f4b41a;
+  --travel-charcoal: #292524;
+  --travel-teal: #0d9488;
 }
 
 @theme inline {
@@ -10,17 +14,10 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-display: var(--font-travel-display);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
 }
