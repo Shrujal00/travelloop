@@ -1,16 +1,11 @@
+import {
+  TripItineraryCollapsible,
+  type DashboardTripForCollapsible,
+} from "@/components/trip-itinerary-collapsible";
 import { getVerifiedEmail } from "@/lib/auth/session";
 import { signOut } from "@/lib/auth/actions";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
-
-type TripRow = {
-  id: string;
-  title: string;
-  place: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  created_at: string;
-};
 
 const RECOMMENDED = [
   {
@@ -33,16 +28,33 @@ const RECOMMENDED = [
 export default async function Home() {
   const email = await getVerifiedEmail();
 
-  let recentTrips: TripRow[] = [];
+  let recentTrips: DashboardTripForCollapsible[] = [];
   if (email) {
     try {
       const supabase = await createClient();
       const { data } = await supabase
         .from("trips")
-        .select("id, title, place, start_date, end_date, created_at")
+        .select(
+          `
+          id,
+          title,
+          place,
+          start_date,
+          end_date,
+          created_at,
+          trip_stops (
+            id,
+            sort_order,
+            city_name,
+            start_date,
+            end_date,
+            trip_activities ( cost )
+          )
+        `
+        )
         .order("created_at", { ascending: false })
         .limit(5);
-      recentTrips = (data ?? []) as TripRow[];
+      recentTrips = (data ?? []) as DashboardTripForCollapsible[];
     } catch {
       recentTrips = [];
     }
@@ -119,8 +131,9 @@ export default async function Home() {
                 Welcome back, {welcomeName}
               </h1>
               <p className="mt-2 max-w-2xl text-stone-600">
-                Pick up where you left off, or start a new route. Upcoming legs
-                and budgets will show here as you build them out.
+                Open the <strong className="font-semibold text-stone-800">Menu</strong> chip on a trip
+                to expand saved itinerary sections (stops), date ranges, and activity budgets after you
+                save in the builder.
               </p>
             </div>
             <Link
@@ -136,6 +149,9 @@ export default async function Home() {
               <h2 className="text-lg font-semibold text-[var(--travel-charcoal)]">
                 Recent trips
               </h2>
+              <p className="mt-1 text-sm text-stone-500">
+                Collapsible cards — same data as after you save in Build itinerary.
+              </p>
               {recentTrips.length === 0 ? (
                 <div className="mt-4 rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-12 text-center text-stone-500">
                   No trips yet. Use{" "}
@@ -146,31 +162,7 @@ export default async function Home() {
                 <ul className="mt-4 space-y-3">
                   {recentTrips.map((t) => (
                     <li key={t.id}>
-                      <Link
-                        href="/trips"
-                        className="flex flex-col gap-1 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm transition hover:border-stone-300 hover:shadow sm:flex-row sm:items-center sm:justify-between"
-                      >
-                        <div className="min-w-0">
-                          <span className="block truncate font-medium text-stone-800">
-                            {t.place || t.title}
-                          </span>
-                          {t.start_date && t.end_date ? (
-                            <span className="text-xs text-stone-500">
-                              {t.start_date} → {t.end_date}
-                            </span>
-                          ) : null}
-                        </div>
-                        <time
-                          dateTime={t.created_at}
-                          className="shrink-0 text-xs text-stone-500"
-                        >
-                          {new Date(t.created_at).toLocaleDateString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </time>
-                      </Link>
+                      <TripItineraryCollapsible trip={t} />
                     </li>
                   ))}
                 </ul>

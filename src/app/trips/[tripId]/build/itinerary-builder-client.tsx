@@ -64,6 +64,14 @@ function toDateInputValue(raw: string | null | undefined): string | undefined {
   return m && /^\d{4}-\d{2}-\d{2}$/.test(m[1]) ? m[1] : undefined;
 }
 
+function sumActivityCosts(activities: BuilderActivityRow[]): number {
+  return activities.reduce((acc, a) => {
+    const c = a.cost;
+    const n = typeof c === "number" ? c : typeof c === "string" ? Number(c) : NaN;
+    return acc + (Number.isFinite(n) ? n : 0);
+  }, 0);
+}
+
 function formatForDatetimeLocal(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);
@@ -81,12 +89,14 @@ function SortableStopCard({
   tripStart,
   tripEnd,
   canDeleteStop,
+  sectionIndex,
 }: {
   stop: BuilderStopRow;
   tripId: string;
   tripStart: string | undefined;
   tripEnd: string | undefined;
   canDeleteStop: boolean;
+  sectionIndex: number;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: stop.id,
@@ -98,23 +108,54 @@ function SortableStopCard({
     zIndex: isDragging ? 1 : undefined,
   };
 
+  const ds = toDateInputValue(stop.start_date) ?? "—";
+  const de = toDateInputValue(stop.end_date) ?? "—";
+  const sectionBudget = sumActivityCosts(stop.trip_activities);
+
   return (
     <li
       ref={setNodeRef}
       style={style}
-      className={`rounded-2xl border border-stone-200 bg-white p-4 shadow-sm ${isDragging ? "opacity-90 shadow-md" : ""}`}
+      className={`list-none ${isDragging ? "opacity-95" : ""}`}
     >
       <div className="flex flex-wrap items-start gap-3">
         <button
           type="button"
-          className="mt-1 flex h-9 w-9 shrink-0 cursor-grab items-center justify-center rounded-lg border border-dashed border-stone-300 text-stone-500 hover:bg-stone-50 active:cursor-grabbing"
-          aria-label="Reorder stop"
+          className="mt-2 flex h-10 w-10 shrink-0 cursor-grab items-center justify-center rounded-xl border-2 border-dashed border-stone-800/20 text-stone-500 hover:bg-stone-50 active:cursor-grabbing"
+          aria-label="Reorder section"
           {...attributes}
           {...listeners}
         >
           ⋮⋮
         </button>
-        <div className="min-w-0 flex-1 space-y-4">
+        <details
+          className={`min-w-0 flex-1 rounded-2xl border-2 border-stone-800/12 bg-white shadow-[4px_4px_0_0_rgb(214,211,209)] ${isDragging ? "ring-2 ring-[var(--travel-accent)]/40" : ""}`}
+          open={sectionIndex === 1}
+        >
+          <summary className="flex cursor-pointer list-none flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between [&::-webkit-details-marker]:hidden">
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-stone-500">
+                Section {sectionIndex}
+              </p>
+              <p className="mt-1 text-lg font-bold tracking-tight text-[var(--travel-charcoal)]">
+                {stop.city_name}
+              </p>
+              <p className="mt-2 max-w-xl text-xs leading-relaxed text-stone-600">
+                Travel dates, hotels, and activities for this leg — expand to edit or add items.
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-col gap-2 sm:items-end">
+              <span className="inline-flex rounded-xl border-2 border-stone-800/12 bg-stone-50 px-3 py-2 text-xs font-semibold text-stone-800">
+                Date range: {ds} to {de}
+              </span>
+              <span className="inline-flex rounded-xl border-2 border-stone-800/12 bg-stone-50 px-3 py-2 text-xs font-semibold text-stone-800">
+                {sectionBudget > 0
+                  ? `Budget (activities): $${sectionBudget.toFixed(2)}`
+                  : "Budget: add activity costs"}
+              </span>
+            </div>
+          </summary>
+          <div className="space-y-4 border-t-2 border-stone-100 px-4 py-4">
           <form action={updateTripStop} className="space-y-3 border-b border-stone-100 pb-4">
             <input type="hidden" name="trip_id" value={tripId} />
             <input type="hidden" name="stop_id" value={stop.id} />
@@ -314,7 +355,8 @@ function SortableStopCard({
               </button>
             </form>
           </div>
-        </div>
+          </div>
+        </details>
       </div>
     </li>
   );
@@ -375,7 +417,7 @@ export function ItineraryBuilderClient({ trip }: { trip: BuilderTripPayload }) {
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={items.map((s) => s.id)} strategy={verticalListSortingStrategy}>
           <ol className="space-y-4">
-            {items.map((stop) => (
+            {items.map((stop, idx) => (
               <SortableStopCard
                 key={stop.id}
                 stop={stop}
@@ -383,16 +425,19 @@ export function ItineraryBuilderClient({ trip }: { trip: BuilderTripPayload }) {
                 tripStart={tripStart}
                 tripEnd={tripEnd}
                 canDeleteStop={items.length > 1}
+                sectionIndex={idx + 1}
               />
             ))}
           </ol>
         </SortableContext>
       </DndContext>
 
-      <section className="rounded-2xl border border-stone-200 bg-white p-5 shadow-sm">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">Add stop</h2>
+      <section className="rounded-2xl border-2 border-dashed border-stone-800/18 bg-stone-50/60 p-6 shadow-[4px_4px_0_0_rgb(214,211,209)]">
+        <h2 className="text-center text-xs font-bold uppercase tracking-widest text-stone-500">
+          Add another section
+        </h2>
         {!canAddStop ? (
-          <p className="mt-2 text-sm text-stone-600">
+          <p className="mt-3 text-center text-sm text-stone-600">
             Set trip start and end dates on{" "}
             <Link href={`/trips/${trip.id}/edit`} className="font-medium underline underline-offset-2">
               Edit trip
@@ -400,7 +445,7 @@ export function ItineraryBuilderClient({ trip }: { trip: BuilderTripPayload }) {
             before adding another stop.
           </p>
         ) : (
-          <form action={addTripStop} className="mt-4 space-y-3">
+          <form action={addTripStop} className="mx-auto mt-5 max-w-md space-y-4">
             <input type="hidden" name="trip_id" value={trip.id} />
             <div>
               <label className="text-xs font-medium text-stone-600" htmlFor="new-city">
@@ -438,12 +483,15 @@ export function ItineraryBuilderClient({ trip }: { trip: BuilderTripPayload }) {
                 />
               </div>
             </div>
-            <button
-              type="submit"
-              className="rounded-lg bg-[var(--travel-accent)] px-4 py-2 text-sm font-semibold text-stone-900 shadow-sm hover:brightness-[0.97]"
-            >
-              Add stop
-            </button>
+            <div className="flex justify-center pt-1">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-xl border-2 border-stone-800/15 bg-[var(--travel-accent)] px-8 py-3 text-sm font-bold text-stone-900 shadow-[3px_3px_0_0_rgb(41,37,36)] transition hover:brightness-[0.98] active:translate-x-px active:translate-y-px active:shadow-none"
+              >
+                <span className="text-lg leading-none">+</span>
+                Add another section
+              </button>
+            </div>
           </form>
         )}
       </section>

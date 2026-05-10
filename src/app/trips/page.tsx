@@ -1,21 +1,13 @@
 import { TripDeleteForm } from "@/app/trips/trip-delete-form";
+import {
+  TripItineraryCollapsible,
+  type DashboardTripForCollapsible,
+} from "@/components/trip-itinerary-collapsible";
 import { getVerifiedEmail } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
 import Link from "next/link";
 import { redirect } from "next/navigation";
-
-type TripStopCount = { count: number };
-
-type TripRow = {
-  id: string;
-  title: string;
-  place: string | null;
-  start_date: string | null;
-  end_date: string | null;
-  created_at: string;
-  trip_stops?: TripStopCount[] | null;
-};
 
 export default async function TripsPage({
   searchParams,
@@ -41,10 +33,27 @@ export default async function TripsPage({
   const supabase = await createClient();
   const { data: tripsRaw, error: listError } = await supabase
     .from("trips")
-    .select("id, title, place, start_date, end_date, created_at, trip_stops(count)")
+    .select(
+      `
+      id,
+      title,
+      place,
+      start_date,
+      end_date,
+      created_at,
+      trip_stops (
+        id,
+        sort_order,
+        city_name,
+        start_date,
+        end_date,
+        trip_activities ( cost )
+      )
+    `
+    )
     .order("created_at", { ascending: false });
 
-  const trips = (tripsRaw ?? []) as TripRow[];
+  const trips = (tripsRaw ?? []) as DashboardTripForCollapsible[];
   const listFailed = Boolean(listError);
 
   return (
@@ -80,9 +89,10 @@ export default async function TripsPage({
               Itineraries
             </h1>
             <p className="mt-3 max-w-xl text-stone-600">
-              Open a trip for details, edit dates and place, or remove a plan. Run
-              migrations through <code className="rounded bg-stone-100 px-1">trip_stops_activities</code>{" "}
-              if lists fail to load.
+              Use the <strong className="font-semibold text-stone-800">Menu</strong> row to expand
+              itinerary sections saved from the builder. Run migrations through{" "}
+              <code className="rounded bg-stone-100 px-1">trip_stops_activities</code> if this list
+              fails to load.
             </p>
           </div>
           <Link
@@ -117,6 +127,9 @@ export default async function TripsPage({
           <h2 className="text-lg font-semibold text-[var(--travel-charcoal)]">
             Your list
           </h2>
+          <p className="mt-1 text-sm text-stone-500">
+            Each trip is a collapsible card so new stops show up here after you save.
+          </p>
           {!listFailed && trips.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-dashed border-stone-300 bg-white/80 px-6 py-14 text-center text-stone-500">
               No trips yet —{" "}
@@ -130,65 +143,27 @@ export default async function TripsPage({
             </div>
           ) : null}
           {!listFailed && trips.length > 0 ? (
-            <ul className="mt-4 space-y-3">
-              {trips.map((t) => {
-                const rawCount = t.trip_stops?.[0]?.count;
-                const stopCount =
-                  typeof rawCount === "number"
-                    ? rawCount
-                    : typeof rawCount === "string"
-                      ? Number(rawCount)
-                      : t.place
-                        ? 1
-                        : 0;
-                return (
-                  <li
-                    key={t.id}
-                    className="flex flex-col gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-stretch sm:justify-between"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <span className="block truncate font-medium text-stone-800">
-                        {t.place || t.title}
-                      </span>
-                      {t.start_date && t.end_date ? (
-                        <span className="mt-0.5 block text-xs text-stone-500">
-                          {t.start_date} → {t.end_date}
-                        </span>
-                      ) : null}
-                      <span className="mt-1 block text-xs text-stone-500">
-                        {stopCount} destination{stopCount === 1 ? "" : "s"}
-                      </span>
-                    </div>
-                    <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
-                      <time
-                        dateTime={t.created_at}
-                        className="text-xs text-stone-500 sm:text-right"
-                      >
-                        {new Date(t.created_at).toLocaleDateString(undefined, {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </time>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Link
-                          href={`/trips/${t.id}`}
-                          className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-medium text-stone-800 transition hover:bg-stone-50"
-                        >
-                          View
-                        </Link>
-                        <Link
-                          href={`/trips/${t.id}/edit`}
-                          className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-medium text-stone-800 transition hover:bg-stone-50"
-                        >
-                          Edit
-                        </Link>
-                        <TripDeleteForm tripId={t.id} />
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
+            <ul className="mt-4 space-y-4">
+              {trips.map((t) => (
+                <li key={t.id} className="space-y-2">
+                  <TripItineraryCollapsible trip={t} />
+                  <div className="flex flex-wrap justify-end gap-2">
+                    <Link
+                      href={`/trips/${t.id}`}
+                      className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-medium text-stone-800 transition hover:bg-stone-50"
+                    >
+                      View
+                    </Link>
+                    <Link
+                      href={`/trips/${t.id}/edit`}
+                      className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-medium text-stone-800 transition hover:bg-stone-50"
+                    >
+                      Edit
+                    </Link>
+                    <TripDeleteForm tripId={t.id} />
+                  </div>
+                </li>
+              ))}
             </ul>
           ) : null}
         </section>

@@ -16,6 +16,8 @@ export default async function TripSegmentLayout({
     redirect("/login?next=" + encodeURIComponent(`/trips/${tripId}`));
   }
 
+  const initial = email.split("@")[0]?.charAt(0).toUpperCase() ?? "?";
+
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900">
       <header className="border-b border-stone-200 bg-white px-6 py-4">
@@ -35,6 +37,12 @@ export default async function TripSegmentLayout({
             </Link>
           </div>
           <div className="flex items-center gap-3 text-sm">
+            <span
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-stone-800/15 bg-amber-50 text-xs font-bold text-stone-800 shadow-sm"
+              title={email}
+            >
+              {initial}
+            </span>
             <span className="hidden text-stone-600 sm:inline">{email}</span>
             <form action={signOut}>
               <button
