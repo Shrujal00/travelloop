@@ -88,12 +88,6 @@ export default async function TripsPage({
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
               Itineraries
             </h1>
-            <p className="mt-3 max-w-xl text-stone-600">
-              Use the <strong className="font-semibold text-stone-800">Menu</strong> row to expand
-              itinerary sections saved from the builder. Run migrations through{" "}
-              <code className="rounded bg-stone-100 px-1">trip_stops_activities</code> if this list
-              fails to load.
-            </p>
           </div>
           <Link
             href="/trips/new"

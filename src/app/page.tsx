@@ -130,11 +130,6 @@ export default async function Home() {
               <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)] sm:text-4xl">
                 Welcome back, {welcomeName}
               </h1>
-              <p className="mt-2 max-w-2xl text-stone-600">
-                Open the <strong className="font-semibold text-stone-800">Menu</strong> chip on a trip
-                to expand saved itinerary sections (stops), date ranges, and activity budgets after you
-                save in the builder.
-              </p>
             </div>
             <Link
               href="/trips/new"
