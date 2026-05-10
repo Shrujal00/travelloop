@@ -1,11 +1,12 @@
 "use client";
 
-import { addSuggestedActivity } from "@/lib/trips/build-actions";
 import type {
   ActivitySuggestion,
   ActivitySuggestionFamily,
   SuggestionsApiResponse,
 } from "@/lib/activities/suggestion-types";
+import { googlePlaceSearchUrl } from "@/lib/places/google-place-search-url";
+import { addSuggestedActivity } from "@/lib/trips/build-actions";
 import Link from "next/link";
 import { startTransition, useCallback, useEffect, useMemo, useState } from "react";
 
@@ -33,12 +34,15 @@ export function DiscoverClient({
   stopId,
   tripTitle,
   stopCityName,
+  stopCountryLabel,
   initialError,
 }: {
   tripId: string;
   stopId: string;
   tripTitle: string;
   stopCityName: string;
+  /** English country name from stop ISO code, when saved on the itinerary stop */
+  stopCountryLabel: string | null;
   initialError: string | null;
 }) {
   const [raw, setRaw] = useState<ActivitySuggestion[]>([]);
@@ -202,7 +206,7 @@ export function DiscoverClient({
       </div>
 
       {loading ? (
-        <p className="text-sm text-stone-600">Loading nearby ideas from OpenStreetMap…</p>
+        <p className="text-sm text-stone-600">Loading suggestions…</p>
       ) : fetchError && raw.length === 0 ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50/80 px-4 py-5 text-sm text-amber-950">
           <p className="font-medium">We couldn&apos;t load suggestions.</p>
@@ -259,17 +263,34 @@ export function DiscoverClient({
                     >
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div className="min-w-0 flex-1">
-                          <p className="text-lg font-bold tracking-tight text-[var(--travel-charcoal)]">{s.name}</p>
-                          {s.wikipediaTitle ? (
-                            <p className="mt-1 text-xs text-stone-500">
-                              Wikipedia: <span className="font-medium text-stone-700">{s.wikipediaTitle}</span>
-                            </p>
-                          ) : null}
-                          <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+                          <a
+                            href={googlePlaceSearchUrl(s.name, {
+                              countryLabel: stopCountryLabel,
+                              localityFallback: stopCityName,
+                            })}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-lg font-bold tracking-tight text-[var(--travel-charcoal)] underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--travel-accent)]/50 focus-visible:ring-offset-2"
+                            aria-label={`Google search for ${s.name}${stopCountryLabel ? ` in ${stopCountryLabel}` : ""}`}
+                          >
+                            {s.name}
+                          </a>
+                          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
                             <span className="inline-flex rounded-full border border-stone-200 bg-stone-50 px-2.5 py-0.5 font-semibold text-stone-700">
                               {s.primaryKind}
                             </span>
                             <span className="text-stone-500">{s.distanceM} m</span>
+                            <a
+                              href={googlePlaceSearchUrl(s.name, {
+                                countryLabel: stopCountryLabel,
+                                localityFallback: stopCityName,
+                              })}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="font-semibold text-stone-700 underline-offset-2 hover:underline"
+                            >
+                              Google search
+                            </a>
                           </div>
                         </div>
                         <form action={addSuggestedActivity} className="shrink-0">
@@ -286,18 +307,6 @@ export function DiscoverClient({
                           </button>
                         </form>
                       </div>
-                      <p className="mt-3 text-[11px] leading-relaxed text-stone-400">
-                        Map data ©{" "}
-                        <a
-                          href="https://www.openstreetmap.org/copyright"
-                          className="underline underline-offset-2"
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          OpenStreetMap
-                        </a>{" "}
-                        contributors, ODbL.
-                      </p>
                     </li>
                   ))}
                 </ul>
