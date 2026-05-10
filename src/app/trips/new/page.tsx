@@ -1,3 +1,4 @@
+import { NewTripPlaceFields } from "@/app/trips/new/new-trip-place-fields";
 import { createTrip } from "@/lib/trips/actions";
 import { getVerifiedEmail } from "@/lib/auth/session";
 import { signOut } from "@/lib/auth/actions";
@@ -98,21 +99,14 @@ export default async function NewTripPage({
             </div>
 
             <div>
-              <label
-                htmlFor="place"
-                className="block text-sm font-semibold text-stone-800"
-              >
-                Select a place
-              </label>
-              <input
-                id="place"
-                name="place"
-                type="text"
-                required
-                maxLength={200}
-                placeholder="City, region, or country"
-                className={fieldClass}
-              />
+              <p className="block text-sm font-semibold text-stone-800">Destination</p>
+              <p className="mt-1 text-xs text-stone-600">
+                Same country + city search as Build itinerary (Photon). Your first stop inherits these
+                coordinates.
+              </p>
+              <div className="mt-3">
+                <NewTripPlaceFields />
+              </div>
             </div>
 
             <div>

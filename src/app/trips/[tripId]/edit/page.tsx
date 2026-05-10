@@ -1,5 +1,7 @@
+import { EditTripPlaceFields } from "@/app/trips/[tripId]/edit/edit-trip-place-fields";
 import { updateTrip } from "@/lib/trips/actions";
 import { getVerifiedSession } from "@/lib/auth/session";
+import type { PlaceFieldDefaults } from "@/lib/places/types";
 import { createClient } from "@/lib/supabase/server";
 import { isUuidTripParam } from "@/lib/trips/trip-id";
 import Link from "next/link";
@@ -37,7 +39,25 @@ export default async function EditTripPage({
   const supabase = await createClient();
   const { data: trip, error } = await supabase
     .from("trips")
-    .select("id, title, place, start_date, end_date")
+    .select(
+      `
+      id,
+      title,
+      place,
+      start_date,
+      end_date,
+      trip_stops (
+        id,
+        sort_order,
+        city_name,
+        country,
+        region,
+        lat,
+        lng,
+        external_place_id
+      )
+    `
+    )
     .eq("id", tripId)
     .maybeSingle();
 
@@ -46,6 +66,53 @@ export default async function EditTripPage({
   }
 
   const place = trip.place?.trim() || trip.title;
+  const stopsRaw = (trip as { trip_stops?: unknown }).trip_stops;
+  const stopsArr = Array.isArray(stopsRaw) ? stopsRaw : [];
+  type Prim = {
+    sort_order: number;
+    city_name: string;
+    country: string | null;
+    region: string | null;
+    lat: number | null;
+    lng: number | null;
+    external_place_id: string | null;
+  };
+  const normalized: Prim[] = stopsArr.map((row) => {
+    const r = row as Record<string, unknown>;
+    const latRaw = r.lat;
+    const lngRaw = r.lng;
+    const lat =
+      latRaw == null || latRaw === ""
+        ? null
+        : typeof latRaw === "number"
+          ? latRaw
+          : Number(latRaw);
+    const lng =
+      lngRaw == null || lngRaw === ""
+        ? null
+        : typeof lngRaw === "number"
+          ? lngRaw
+          : Number(lngRaw);
+    const cc = r.country != null ? String(r.country).trim().toUpperCase() : "";
+    return {
+      sort_order: typeof r.sort_order === "number" ? r.sort_order : Number(r.sort_order ?? 0),
+      city_name: String(r.city_name ?? "").trim(),
+      country: /^[A-Z]{2}$/.test(cc) ? cc : null,
+      region: r.region != null ? String(r.region) : null,
+      lat: Number.isFinite(lat) ? lat : null,
+      lng: Number.isFinite(lng) ? lng : null,
+      external_place_id: r.external_place_id != null ? String(r.external_place_id) : null,
+    };
+  });
+  const primary = [...normalized].sort((a, b) => a.sort_order - b.sort_order)[0];
+  const placeDefaults: PlaceFieldDefaults = {
+    city_name: primary?.city_name || place,
+    country: primary?.country ?? null,
+    region: primary?.region ?? null,
+    lat: primary?.lat ?? null,
+    lng: primary?.lng ?? null,
+    external_place_id: primary?.external_place_id ?? null,
+  };
   const fieldClass =
     "mt-2 w-full rounded-xl border-2 border-stone-800/15 bg-white px-3 py-2.5 text-stone-900 outline-none transition focus:border-[var(--travel-accent)] focus:ring-2 focus:ring-[var(--travel-accent)]/30";
 
@@ -88,18 +155,14 @@ export default async function EditTripPage({
         </div>
 
         <div>
-          <label htmlFor="place" className="block text-sm font-semibold text-stone-800">
-            Place (destination)
-          </label>
-          <input
-            id="place"
-            name="place"
-            type="text"
-            required
-            maxLength={200}
-            defaultValue={place}
-            className={fieldClass}
-          />
+          <p className="block text-sm font-semibold text-stone-800">Place (destination)</p>
+          <p className="mt-1 text-xs text-stone-600">
+            Updates the trip destination and the primary stop (lowest sort order) with the same Photon
+            fields as the builder.
+          </p>
+          <div className="mt-3">
+            <EditTripPlaceFields defaults={placeDefaults} />
+          </div>
         </div>
 
         <div>

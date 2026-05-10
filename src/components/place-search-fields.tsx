@@ -7,14 +7,43 @@ import { useEffect, useMemo, useRef, useState } from "react";
 const fieldClass =
   "mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 outline-none focus:border-[var(--travel-accent)] focus:ring-1 focus:ring-[var(--travel-accent)]/40";
 
+export type PlaceSearchLabels = {
+  country: string;
+  city: string;
+  countryHint: string;
+};
+
+const defaultLabels: PlaceSearchLabels = {
+  country: "Country filter",
+  city: "City or place",
+  countryHint: "Narrows search results. You can still type any city name.",
+};
+
 type PlaceSearchFieldsProps = {
   inputId: string;
   countrySelectId: string;
   defaults: PlaceFieldDefaults;
+  /** Form field name for the main text input (default `city_name`; use `place` on new/edit trip forms). */
+  cityNameField?: string;
+  /** Replaces styling for country `<select>` and city `<input>` (e.g. new trip wireframe borders). */
+  controlClassName?: string;
+  /** Override visible labels / hint copy. */
+  labels?: Partial<PlaceSearchLabels>;
+  showAttribution?: boolean;
 };
 
-export function PlaceSearchFields({ inputId, countrySelectId, defaults }: PlaceSearchFieldsProps) {
+export function PlaceSearchFields({
+  inputId,
+  countrySelectId,
+  defaults,
+  cityNameField = "city_name",
+  controlClassName,
+  labels: labelsProp,
+  showAttribution = true,
+}: PlaceSearchFieldsProps) {
   const countryOptions = useMemo(() => getCountryOptions(), []);
+  const ctl = controlClassName ?? fieldClass;
+  const labels = { ...defaultLabels, ...labelsProp };
   const [countryVal, setCountryVal] = useState(() => defaults.country ?? "");
   const [cityDraft, setCityDraft] = useState(() => defaults.city_name);
   const [meta, setMeta] = useState(() => ({
@@ -96,7 +125,7 @@ export function PlaceSearchFields({ inputId, countrySelectId, defaults }: PlaceS
     <div ref={wrapRef} className="space-y-3">
       <div>
         <label className="text-xs font-medium text-stone-600" htmlFor={countrySelectId}>
-          Country filter
+          {labels.country}
         </label>
         <select
           id={countrySelectId}
@@ -106,7 +135,7 @@ export function PlaceSearchFields({ inputId, countrySelectId, defaults }: PlaceS
             setCountryVal(e.target.value);
             setOpen(true);
           }}
-          className={fieldClass}
+          className={ctl}
         >
           <option value="">All countries</option>
           {countryOptions.map((c) => (
@@ -115,25 +144,23 @@ export function PlaceSearchFields({ inputId, countrySelectId, defaults }: PlaceS
             </option>
           ))}
         </select>
-        <p className="mt-1 text-[11px] text-stone-500">
-          Narrows search results. You can still type any city name.
-        </p>
+        <p className="mt-1 text-[11px] text-stone-500">{labels.countryHint}</p>
       </div>
 
       <div className="relative">
         <label className="text-xs font-medium text-stone-600" htmlFor={inputId}>
-          City or place
+          {labels.city}
         </label>
         <input
           id={inputId}
-          name="city_name"
+          name={cityNameField}
           required
           maxLength={200}
           autoComplete="off"
           value={cityDraft}
           onChange={(e) => onCityInput(e.target.value)}
           onFocus={() => setOpen(true)}
-          className={fieldClass}
+          className={ctl}
         />
         <input type="hidden" name="region" value={meta.region ?? ""} readOnly />
         <input
@@ -176,22 +203,24 @@ export function PlaceSearchFields({ inputId, countrySelectId, defaults }: PlaceS
         ) : null}
       </div>
 
-      <p className="text-[10px] leading-relaxed text-stone-400">
-        Search data ©{" "}
-        <a
-          href="https://www.openstreetmap.org/copyright"
-          className="underline underline-offset-2"
-          target="_blank"
-          rel="noreferrer"
-        >
-          OpenStreetMap
-        </a>{" "}
-        contributors, via{" "}
-        <a href="https://photon.komoot.io" className="underline underline-offset-2" target="_blank" rel="noreferrer">
-          Photon
-        </a>
-        .
-      </p>
+      {showAttribution ? (
+        <p className="text-[10px] leading-relaxed text-stone-400">
+          Search data ©{" "}
+          <a
+            href="https://www.openstreetmap.org/copyright"
+            className="underline underline-offset-2"
+            target="_blank"
+            rel="noreferrer"
+          >
+            OpenStreetMap
+          </a>{" "}
+          contributors, via{" "}
+          <a href="https://photon.komoot.io" className="underline underline-offset-2" target="_blank" rel="noreferrer">
+            Photon
+          </a>
+          .
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { getVerifiedSession } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { parseGeocoderFields } from "@/lib/trips/place-form-parse";
 import { revalidateTripPaths } from "@/lib/trips/revalidate-trip";
 
 function parseISODate(raw: unknown): string | null {
@@ -72,12 +73,19 @@ export async function createTrip(formData: FormData) {
     redirect("/trips/new?error=" + encodeURIComponent(error?.message ?? "Could not create trip."));
   }
 
+  const geo = parseGeocoderFields(formData);
+
   const { error: stopError } = await supabase.from("trip_stops").insert({
     trip_id: inserted.id,
     sort_order: 0,
     city_name: title,
     start_date: start,
     end_date: end,
+    country: geo.country,
+    region: geo.region,
+    lat: geo.lat,
+    lng: geo.lng,
+    external_place_id: geo.external_place_id,
   });
 
   if (stopError) {
@@ -158,12 +166,18 @@ export async function updateTrip(formData: FormData) {
     .maybeSingle();
 
   if (primaryStop?.id) {
+    const geo = parseGeocoderFields(formData);
     await supabase
       .from("trip_stops")
       .update({
         city_name: title,
         start_date: start,
         end_date: end,
+        country: geo.country,
+        region: geo.region,
+        lat: geo.lat,
+        lng: geo.lng,
+        external_place_id: geo.external_place_id,
       })
       .eq("id", primaryStop.id);
   }
