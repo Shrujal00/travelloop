@@ -13,6 +13,7 @@ export function ItineraryViewClient({
   tripEnd,
   days,
   calendarCells,
+  showFooterLinks = true,
 }: {
   tripId: string;
   tripTitle: string;
@@ -20,6 +21,8 @@ export function ItineraryViewClient({
   tripEnd: string;
   days: ItineraryDayVM[];
   calendarCells: CalendarCell[];
+  /** When false (e.g. public share page), hide owner-only navigation links. */
+  showFooterLinks?: boolean;
 }) {
   const [mode, setMode] = useState<ViewMode>("list");
 
@@ -98,7 +101,9 @@ export function ItineraryViewClient({
                 </div>
                 {day.activities.length === 0 ? (
                   <p className="mt-3 text-sm text-stone-500">
-                    No activities on this day — add some in the builder (times optional).
+                    {showFooterLinks
+                      ? "No activities on this day — add some in the builder (times optional)."
+                      : "No activities listed for this day."}
                   </p>
                 ) : (
                   <ul className="mt-4 space-y-2">
@@ -181,32 +186,46 @@ export function ItineraryViewClient({
         </div>
       )}
 
-      <p className="text-center text-sm text-stone-500">
-        <Link href={`/trips/${tripId}`} className="font-medium text-stone-700 underline-offset-4 hover:underline">
-          ← Trip overview
-        </Link>
-        {" · "}
-        <Link
-          href={`/trips/${tripId}/build`}
-          className="font-medium text-stone-700 underline-offset-4 hover:underline"
-        >
-          Edit in builder
-        </Link>
-        {" · "}
-        <Link
-          href={`/trips/${tripId}/budget`}
-          className="font-medium text-stone-700 underline-offset-4 hover:underline"
-        >
-          Budget
-        </Link>
-        {" · "}
-        <Link
-          href={`/trips/${tripId}/packing`}
-          className="font-medium text-stone-700 underline-offset-4 hover:underline"
-        >
-          Packing
-        </Link>
-      </p>
+      {showFooterLinks ? (
+        <p className="text-center text-sm text-stone-500">
+          <Link href={`/trips/${tripId}`} className="font-medium text-stone-700 underline-offset-4 hover:underline">
+            ← Trip overview
+          </Link>
+          {" · "}
+          <Link
+            href={`/trips/${tripId}/build`}
+            className="font-medium text-stone-700 underline-offset-4 hover:underline"
+          >
+            Edit in builder
+          </Link>
+          {" · "}
+          <Link
+            href={`/trips/${tripId}/budget`}
+            className="font-medium text-stone-700 underline-offset-4 hover:underline"
+          >
+            Budget
+          </Link>
+          {" · "}
+          <Link
+            href={`/trips/${tripId}/packing`}
+            className="font-medium text-stone-700 underline-offset-4 hover:underline"
+          >
+            Packing
+          </Link>
+        </p>
+      ) : (
+        <p className="text-center text-sm text-stone-500">
+          Shared with{" "}
+          <Link href="/" className="font-medium text-stone-700 underline-offset-4 hover:underline">
+            Traveloop
+          </Link>
+          {" · "}
+          <Link href="/signup" className="font-medium text-stone-700 underline-offset-4 hover:underline">
+            Create an account
+          </Link>{" "}
+          to plan your own trips.
+        </p>
+      )}
     </div>
   );
 }
