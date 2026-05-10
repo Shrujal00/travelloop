@@ -151,10 +151,6 @@ export default async function NewTripPage({
             <h2 className="text-base font-bold leading-snug text-[var(--travel-charcoal)] sm:text-lg">
               Suggestions for places to visit / activities to perform
             </h2>
-            <p className="mt-2 text-xs text-stone-500">
-              Placeholder grid from the wireframe — recommendations hook up
-              later.
-            </p>
             <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
               {SUGGESTION_SLOTS.map((i) => (
                 <div
