@@ -9,6 +9,7 @@ export function revalidateTripPaths(tripId: string, stopId?: string | null) {
   revalidatePath(`/trips/${tripId}/build`);
   revalidatePath(`/trips/${tripId}/itinerary`);
   revalidatePath(`/trips/${tripId}/budget`);
+  revalidatePath(`/trips/${tripId}/packing`);
   if (stopId) {
     revalidatePath(`/trips/${tripId}/stops/${stopId}/discover`);
   }
