@@ -29,7 +29,6 @@ type PlaceSearchFieldsProps = {
   controlClassName?: string;
   /** Override visible labels / hint copy. */
   labels?: Partial<PlaceSearchLabels>;
-  showAttribution?: boolean;
 };
 
 export function PlaceSearchFields({
@@ -39,7 +38,6 @@ export function PlaceSearchFields({
   cityNameField = "city_name",
   controlClassName,
   labels: labelsProp,
-  showAttribution = true,
 }: PlaceSearchFieldsProps) {
   const countryOptions = useMemo(() => getCountryOptions(), []);
   const ctl = controlClassName ?? fieldClass;
@@ -202,25 +200,6 @@ export function PlaceSearchFields({
           </div>
         ) : null}
       </div>
-
-      {showAttribution ? (
-        <p className="text-[10px] leading-relaxed text-stone-400">
-          Search data ©{" "}
-          <a
-            href="https://www.openstreetmap.org/copyright"
-            className="underline underline-offset-2"
-            target="_blank"
-            rel="noreferrer"
-          >
-            OpenStreetMap
-          </a>{" "}
-          contributors, via{" "}
-          <a href="https://photon.komoot.io" className="underline underline-offset-2" target="_blank" rel="noreferrer">
-            Photon
-          </a>
-          .
-        </p>
-      ) : null}
     </div>
   );
 }
