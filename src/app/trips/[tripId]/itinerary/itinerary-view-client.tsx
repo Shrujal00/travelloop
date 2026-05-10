@@ -192,6 +192,13 @@ export function ItineraryViewClient({
         >
           Edit in builder
         </Link>
+        {" · "}
+        <Link
+          href={`/trips/${tripId}/budget`}
+          className="font-medium text-stone-700 underline-offset-4 hover:underline"
+        >
+          Budget
+        </Link>
       </p>
     </div>
   );

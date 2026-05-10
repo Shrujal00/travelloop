@@ -146,9 +146,6 @@ function SortableStopCard({
               <p className="mt-1 text-lg font-bold tracking-tight text-[var(--travel-charcoal)]">
                 {stop.city_name}
               </p>
-              <p className="mt-2 max-w-xl text-xs leading-relaxed text-stone-600">
-                Travel dates, hotels, and activities for this leg — expand to edit or add items.
-              </p>
             </div>
             <div className="flex shrink-0 flex-col gap-2 sm:items-end">
               <span className="inline-flex rounded-xl border-2 border-stone-800/12 bg-stone-50 px-3 py-2 text-xs font-semibold text-stone-800">
@@ -528,6 +525,13 @@ export function ItineraryBuilderClient({ trip }: { trip: BuilderTripPayload }) {
           className="font-medium text-stone-700 underline-offset-4 hover:underline"
         >
           Itinerary view
+        </Link>
+        {" · "}
+        <Link
+          href={`/trips/${trip.id}/budget`}
+          className="font-medium text-stone-700 underline-offset-4 hover:underline"
+        >
+          Budget
         </Link>
       </p>
     </div>
