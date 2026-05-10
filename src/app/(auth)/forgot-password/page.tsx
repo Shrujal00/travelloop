@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
 
   if (done) {
     return (
-      <div className="rounded-2xl border border-stone-200/80 bg-white p-8 shadow-sm">
+      <div className="rounded-2xl border border-stone-200 bg-white p-8 shadow-md shadow-stone-200/60 ring-1 ring-black/[0.03]">
         <h1 className="text-2xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
           Check your inbox
         </h1>
@@ -65,11 +65,11 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="rounded-2xl border border-stone-200/80 bg-white p-8 shadow-sm">
+    <div className="rounded-2xl border border-stone-200 bg-white p-8 shadow-md shadow-stone-200/60 ring-1 ring-black/[0.03]">
       <h1 className="text-2xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
         Reset password
       </h1>
-      <p className="mt-1 text-sm text-stone-600">
+      <p className="mt-1.5 text-sm leading-relaxed text-stone-600">
         We&apos;ll email you a link to set a new password.
       </p>
 
@@ -97,7 +97,7 @@ export default function ForgotPasswordPage() {
             autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 w-full rounded-lg border border-stone-300 px-3 py-2.5 text-stone-900 shadow-sm outline-none ring-[var(--travel-accent)] transition focus:border-[var(--travel-accent)] focus:ring-2"
+            className="mt-1.5 w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-[var(--travel-accent)] focus:ring-2 focus:ring-[var(--travel-accent)]/35"
           />
           {fieldError ? (
             <p className="mt-1 text-sm text-red-600">{fieldError}</p>
@@ -107,7 +107,7 @@ export default function ForgotPasswordPage() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center rounded-lg bg-[var(--travel-accent)] px-4 py-3 text-base font-semibold text-stone-900 shadow-sm transition hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
+          className="flex w-full items-center justify-center rounded-lg bg-[var(--travel-accent)] px-4 py-3 text-base font-semibold text-stone-900 shadow-sm transition hover:brightness-[0.97] active:brightness-95 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? "Sending…" : "Send reset link"}
         </button>
