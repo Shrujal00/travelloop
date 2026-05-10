@@ -19,7 +19,7 @@ Personalized travel planning made easy — **Next.js 16** (App Router) and **Sup
    - Site URL: `http://localhost:3000` (and your production URL when deployed)
    - Redirect URLs: `http://localhost:3000/**`
 
-4. **Database (run in Supabase SQL Editor):** open each file under `supabase/migrations/` **in filename order** (`profiles` → `trips` → `trip_place_dates` → `trip_stops_activities` → `profiles_display_avatar` → `trip_activities_external_ref` → `trip_budget` → `community_posts` → `packing_items` → `trip_public_share`) and execute the SQL once per project so RLS-backed tables and columns exist.
+4. **Database (run in Supabase SQL Editor):** open each file under `supabase/migrations/` **in filename order** (`profiles` → `trips` → `trip_place_dates` → `trip_stops_activities` → `profiles_display_avatar` → `trip_activities_external_ref` → `trip_budget` → `community_posts` → `packing_items` → `trip_public_share` → `profiles_settings_extensions` → `storage_avatars_bucket` → `trip_notes`) and execute the SQL once per project so RLS-backed tables and columns exist.
 
 5. Install and run:
 
@@ -41,6 +41,10 @@ Open [http://localhost:3000](http://localhost:3000). Auth: `/login`, `/signup`, 
 **Public itinerary (roadmap Phase H / spec 11):** **`/p/[slug]`** is a read-only, login-optional view of stops and activities for trips you mark **shared** from the trip overview. **`trips.is_public`** + **`trips.public_slug`** drive access (RLS allows `anon`/`authenticated` reads only when `is_public`). Guests get **Copy link / Share / Copy to my trips** (copy duplicates stops + activities into a new private trip). Budget, packing, and manual expenses stay private. Apply migration `20260519000000_trip_public_share.sql`. For stable absolute URLs in production, set **`NEXT_PUBLIC_SITE_URL`** (see `.env.example`).
 
 **Community feed:** **`/community`** — search, group-by, filters, composer; authors use **`profiles.display_name`** / **`profiles.avatar_url`**. Migration `20260517000000_community_posts.sql`.
+
+**Phase I (settings / spec 12):** **`/settings`** — change **sign-in email** (`auth.updateUser`), **display name**, **HTTPS avatar URL**, **preferred language**, **saved destinations** (Photon-backed picker stored as JSON on `profiles.saved_destinations`), **avatar file upload** to Storage bucket **`avatars`** (public read; paths `{user_id}/…`). **Delete account** requires **`SUPABASE_SERVICE_ROLE_KEY`** on the server only (Auth Admin `deleteUser`). Migrations: `20260520000000_profiles_settings_extensions.sql`, `20260520000001_storage_avatars_bucket.sql`.
+
+**Phase J (trip notes / spec 13):** **`/trips/[tripId]/notes`** — chronological journal entries with optional **stop** link and **note date**; full CRUD with RLS scoped to trip owner. Migration `20260521000000_trip_notes.sql`.
 
 ## Contributors (commit attribution)
 
