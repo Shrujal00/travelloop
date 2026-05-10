@@ -7,6 +7,9 @@ import { redirect } from "next/navigation";
 type TripRow = {
   id: string;
   title: string;
+  place: string | null;
+  start_date: string | null;
+  end_date: string | null;
   created_at: string;
 };
 
@@ -34,7 +37,7 @@ export default async function TripsPage({
   const supabase = await createClient();
   const { data: tripsRaw, error: listError } = await supabase
     .from("trips")
-    .select("id, title, created_at")
+    .select("id, title, place, start_date, end_date, created_at")
     .order("created_at", { ascending: false });
 
   const trips = (tripsRaw ?? []) as TripRow[];
@@ -73,8 +76,8 @@ export default async function TripsPage({
               Itineraries
             </h1>
             <p className="mt-3 max-w-xl text-stone-600">
-              Open the create screen to add a name; more fields from the
-              wireframe ship when the schema does.
+              Plan dates and a destination on the create screen. Run the latest
+              trip migration if saves fail.
             </p>
           </div>
           <Link
@@ -99,9 +102,9 @@ export default async function TripsPage({
             className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
             role="status"
           >
-            Could not load trips. Run the{" "}
-            <code className="rounded bg-amber-100/80 px-1">trips</code> migration
-            in Supabase (see README), then refresh.
+            Could not load trips. Run migrations in{" "}
+            <code className="rounded bg-amber-100/80 px-1">supabase/migrations/</code>{" "}
+            (see README), then refresh.
           </p>
         ) : null}
 
@@ -126,11 +129,18 @@ export default async function TripsPage({
               {trips.map((t) => (
                 <li
                   key={t.id}
-                  className="flex items-center justify-between gap-4 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm"
+                  className="flex flex-col gap-1 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <span className="min-w-0 truncate font-medium text-stone-800">
-                    {t.title}
-                  </span>
+                  <div className="min-w-0">
+                    <span className="block truncate font-medium text-stone-800">
+                      {t.place || t.title}
+                    </span>
+                    {t.start_date && t.end_date ? (
+                      <span className="text-xs text-stone-500">
+                        {t.start_date} → {t.end_date}
+                      </span>
+                    ) : null}
+                  </div>
                   <time
                     dateTime={t.created_at}
                     className="shrink-0 text-xs text-stone-500"

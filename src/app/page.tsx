@@ -3,7 +3,14 @@ import { signOut } from "@/lib/auth/actions";
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 
-type TripRow = { id: string; title: string; created_at: string };
+type TripRow = {
+  id: string;
+  title: string;
+  place: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  created_at: string;
+};
 
 const RECOMMENDED = [
   {
@@ -32,7 +39,7 @@ export default async function Home() {
       const supabase = await createClient();
       const { data } = await supabase
         .from("trips")
-        .select("id, title, created_at")
+        .select("id, title, place, start_date, end_date, created_at")
         .order("created_at", { ascending: false })
         .limit(5);
       recentTrips = (data ?? []) as TripRow[];
@@ -133,7 +140,7 @@ export default async function Home() {
                 <div className="mt-4 rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-12 text-center text-stone-500">
                   No trips yet. Use{" "}
                   <strong className="text-stone-700">Plan new trip</strong> to
-                  open the create screen (name only for now).
+                  add dates and a destination.
                 </div>
               ) : (
                 <ul className="mt-4 space-y-3">
@@ -141,11 +148,18 @@ export default async function Home() {
                     <li key={t.id}>
                       <Link
                         href="/trips"
-                        className="flex items-center justify-between gap-4 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm transition hover:border-stone-300 hover:shadow"
+                        className="flex flex-col gap-1 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm transition hover:border-stone-300 hover:shadow sm:flex-row sm:items-center sm:justify-between"
                       >
-                        <span className="min-w-0 truncate font-medium text-stone-800">
-                          {t.title}
-                        </span>
+                        <div className="min-w-0">
+                          <span className="block truncate font-medium text-stone-800">
+                            {t.place || t.title}
+                          </span>
+                          {t.start_date && t.end_date ? (
+                            <span className="text-xs text-stone-500">
+                              {t.start_date} → {t.end_date}
+                            </span>
+                          ) : null}
+                        </div>
                         <time
                           dateTime={t.created_at}
                           className="shrink-0 text-xs text-stone-500"

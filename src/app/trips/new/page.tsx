@@ -13,6 +13,8 @@ function decodeErr(raw: string | undefined): string | null {
   }
 }
 
+const SUGGESTION_SLOTS = Array.from({ length: 6 }, (_, i) => i);
+
 export default async function NewTripPage({
   searchParams,
 }: {
@@ -26,9 +28,14 @@ export default async function NewTripPage({
     redirect("/login?next=/trips/new");
   }
 
+  const initial = email.split("@")[0]?.charAt(0).toUpperCase() ?? "?";
+
+  const fieldClass =
+    "mt-2 w-full rounded-xl border-2 border-stone-800/15 bg-white px-3 py-2.5 text-stone-900 outline-none transition focus:border-[var(--travel-accent)] focus:ring-2 focus:ring-[var(--travel-accent)]/30";
+
   return (
-    <div className="min-h-screen bg-stone-50 text-stone-900">
-      <header className="border-b border-stone-200 bg-white px-6 py-4">
+    <div className="min-h-screen bg-stone-100 text-stone-900">
+      <header className="border-b-2 border-stone-800/10 bg-white px-4 py-3 sm:px-6">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           <Link
             href="/"
@@ -36,12 +43,17 @@ export default async function NewTripPage({
           >
             Traveloop
           </Link>
-          <div className="flex items-center gap-3 text-sm">
-            <span className="hidden text-stone-600 sm:inline">{email}</span>
-            <form action={signOut}>
+          <div className="flex items-center gap-3">
+            <span
+              className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-stone-800/20 bg-amber-50 text-sm font-bold text-stone-800 shadow-sm"
+              title={email}
+            >
+              {initial}
+            </span>
+            <form action={signOut} className="hidden sm:block">
               <button
                 type="submit"
-                className="rounded-lg border border-stone-300 px-3 py-1.5 font-medium text-stone-700 transition hover:bg-stone-50"
+                className="text-xs font-medium text-stone-500 underline-offset-2 hover:text-stone-800 hover:underline"
               >
                 Sign out
               </button>
@@ -50,113 +62,124 @@ export default async function NewTripPage({
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl px-6 py-10">
-        <nav className="text-sm text-stone-500">
-          <Link href="/" className="hover:text-stone-800">
-            Home
-          </Link>
-          <span className="mx-2 text-stone-400">/</span>
-          <Link href="/trips" className="hover:text-stone-800">
-            Trips
-          </Link>
-          <span className="mx-2 text-stone-400">/</span>
-          <span className="font-medium text-stone-700">New</span>
-        </nav>
-
-        <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-stone-500">
-          Create trip
-        </p>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
-          Start a plan
-        </h1>
-        <p className="mt-3 max-w-2xl text-sm leading-relaxed text-stone-600">
-          Like a full wireframe, you might expect dates, notes, and a cover
-          image here — this build only saves the{" "}
-          <strong className="text-stone-800">trip name</strong> to match the
-          current database. The other blocks are placeholders for what comes
-          next.
-        </p>
-
-        {errorMessage ? (
-          <p
-            className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
-            role="alert"
-          >
-            {errorMessage}
+      <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
+        <div className="rounded-[1.75rem] border-2 border-stone-800/15 bg-white p-5 shadow-[5px_5px_0_0_rgb(214,211,209)] sm:p-8">
+          <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">
+            Screen 4 · New trip
           </p>
-        ) : null}
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[var(--travel-charcoal)] sm:text-3xl">
+            Plan a new trip
+          </h1>
 
-        <form action={createTrip} className="mt-10 space-y-10">
-          <section className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500">
-              Trip name
+          {errorMessage ? (
+            <p
+              className="mt-5 rounded-xl border-2 border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800"
+              role="alert"
+            >
+              {errorMessage}
+            </p>
+          ) : null}
+
+          <form action={createTrip} className="mt-8 space-y-6">
+            <div>
+              <label
+                htmlFor="start_date"
+                className="block text-sm font-semibold text-stone-800"
+              >
+                Start date
+              </label>
+              <input
+                id="start_date"
+                name="start_date"
+                type="date"
+                required
+                className={fieldClass}
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="place"
+                className="block text-sm font-semibold text-stone-800"
+              >
+                Select a place
+              </label>
+              <input
+                id="place"
+                name="place"
+                type="text"
+                required
+                maxLength={200}
+                placeholder="City, region, or country"
+                className={fieldClass}
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="end_date"
+                className="block text-sm font-semibold text-stone-800"
+              >
+                End date
+              </label>
+              <input
+                id="end_date"
+                name="end_date"
+                type="date"
+                required
+                className={fieldClass}
+              />
+            </div>
+
+            <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:justify-end">
+              <Link
+                href="/trips"
+                className="inline-flex items-center justify-center rounded-xl border-2 border-stone-800/15 bg-stone-50 px-5 py-2.5 text-sm font-semibold text-stone-700 transition hover:bg-stone-100"
+              >
+                Cancel
+              </Link>
+              <button
+                type="submit"
+                className="inline-flex items-center justify-center rounded-xl border-2 border-stone-800/20 bg-[var(--travel-accent)] px-6 py-2.5 text-sm font-bold text-stone-900 shadow-[3px_3px_0_0_rgb(41,37,36)] transition hover:brightness-[0.98] active:translate-x-px active:translate-y-px active:shadow-none"
+              >
+                Save trip
+              </button>
+            </div>
+          </form>
+
+          <section className="mt-12 border-t-2 border-dashed border-stone-300 pt-10">
+            <h2 className="text-base font-bold leading-snug text-[var(--travel-charcoal)] sm:text-lg">
+              Suggestions for places to visit / activities to perform
             </h2>
-            <label htmlFor="trip-title" className="mt-3 block text-sm font-medium text-stone-700">
-              Name <span className="text-red-600">*</span>
-            </label>
-            <input
-              id="trip-title"
-              name="title"
-              type="text"
-              required
-              maxLength={200}
-              autoComplete="off"
-              placeholder="e.g. Japan spring 2026"
-              className="mt-2 w-full rounded-lg border border-stone-200 bg-white px-3 py-2.5 text-stone-900 outline-none transition placeholder:text-stone-400 focus:border-[var(--travel-accent)] focus:ring-2 focus:ring-[var(--travel-accent)]/35"
-            />
+            <p className="mt-2 text-xs text-stone-500">
+              Placeholder grid from the wireframe — recommendations hook up
+              later.
+            </p>
+            <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {SUGGESTION_SLOTS.map((i) => (
+                <div
+                  key={i}
+                  className="aspect-[4/3] rounded-2xl border-2 border-dashed border-stone-300 bg-stone-50/80"
+                  aria-hidden
+                />
+              ))}
+            </div>
           </section>
+        </div>
 
-          <div className="grid gap-4 sm:grid-cols-3">
-            <section className="rounded-2xl border border-dashed border-stone-300 bg-stone-100/60 p-5">
-              <h2 className="text-sm font-semibold text-stone-700">
-                Start &amp; end dates
-              </h2>
-              <p className="mt-2 text-xs leading-relaxed text-stone-500">
-                Wireframe: date pickers. Not wired yet — needs new columns in
-                Supabase.
-              </p>
-              <p className="mt-4 rounded-md bg-white/80 px-2 py-1.5 text-center text-xs font-medium text-stone-400">
-                Planned
-              </p>
-            </section>
-            <section className="rounded-2xl border border-dashed border-stone-300 bg-stone-100/60 p-5">
-              <h2 className="text-sm font-semibold text-stone-700">
-                Description
-              </h2>
-              <p className="mt-2 text-xs leading-relaxed text-stone-500">
-                Wireframe: long text. Not saved in this milestone.
-              </p>
-              <p className="mt-4 rounded-md bg-white/80 px-2 py-1.5 text-center text-xs font-medium text-stone-400">
-                Planned
-              </p>
-            </section>
-            <section className="rounded-2xl border border-dashed border-stone-300 bg-stone-100/60 p-5">
-              <h2 className="text-sm font-semibold text-stone-700">
-                Cover photo
-              </h2>
-              <p className="mt-2 text-xs leading-relaxed text-stone-500">
-                Wireframe: optional upload. Storage hook-up comes later.
-              </p>
-              <p className="mt-4 rounded-md bg-white/80 px-2 py-1.5 text-center text-xs font-medium text-stone-400">
-                Planned
-              </p>
-            </section>
-          </div>
+        <p className="mt-6 text-center text-sm text-stone-500">
+          <Link href="/trips" className="font-medium text-stone-700 hover:underline">
+            ← Back to all trips
+          </Link>
+        </p>
 
-          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-            <Link
-              href="/trips"
-              className="inline-flex items-center justify-center rounded-lg border border-stone-300 bg-white px-5 py-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50"
-            >
-              Cancel
-            </Link>
-            <button
-              type="submit"
-              className="inline-flex items-center justify-center rounded-lg bg-[var(--travel-accent)] px-6 py-3 text-sm font-semibold text-stone-900 shadow-sm transition hover:brightness-[0.97]"
-            >
-              Save trip
-            </button>
-          </div>
+        <form action={signOut} className="mt-4 text-center sm:hidden">
+          <button
+            type="submit"
+            className="text-xs font-medium text-stone-500 underline-offset-2 hover:text-stone-800"
+          >
+            Sign out
+          </button>
         </form>
       </main>
     </div>
