@@ -19,7 +19,7 @@ Personalized travel planning made easy — **Next.js 16** (App Router) and **Sup
    - Site URL: `http://localhost:3000` (and your production URL when deployed)
    - Redirect URLs: `http://localhost:3000/**`
 
-4. **Database (run in Supabase SQL Editor):** open each file under `supabase/migrations/` **in filename order** (`profiles` → `trips` → `trip_place_dates` → `trip_stops_activities` → `profiles_display_avatar`) and execute the SQL once per project so RLS-backed tables and columns exist.
+4. **Database (run in Supabase SQL Editor):** open each file under `supabase/migrations/` **in filename order** (`profiles` → `trips` → `trip_place_dates` → `trip_stops_activities` → `profiles_display_avatar` → `trip_activities_external_ref` for Phase E) and execute the SQL once per project so RLS-backed tables and columns exist.
 
 5. Install and run:
 
@@ -31,6 +31,8 @@ Personalized travel planning made easy — **Next.js 16** (App Router) and **Sup
 Open [http://localhost:3000](http://localhost:3000). Auth: `/login`, `/signup`, `/forgot-password`. After sign-in, `/trips` lists trips once the `trips` migration has been applied.
 
 **Phase D (places):** static ISO country list + server-side city search via [Photon](https://photon.komoot.io) (OpenStreetMap data) on **Build itinerary**, **New trip**, and **Edit trip** (first stop stores `country` / `region` / `lat` / `lng` / `external_place_id` when you pick a result). Results are cached on the server; you must be signed in to call `/api/places/search`. Optional env vars: `PHOTON_API_BASE_URL`, `PHOTON_USER_AGENT` (see `.env.example`).
+
+**Phase E (activity discover):** per-stop **Browse activity ideas** opens `/trips/[tripId]/stops/[stopId]/discover` — server-cached POI hints from a public [Overpass](https://wiki.openstreetmap.org/wiki/Overpass_API) interpreter (tiny radius queries; identify your app via `OVERPASS_USER_AGENT`), optional nearby [Wikipedia](https://en.wikipedia.org/wiki/Wikipedia:API) titles (geosearch only; no extracts), and one-tap add into `trip_activities`. If a stop has no saved coordinates, Photon geocodes the city name once, then Overpass runs from that centroid. Apply migration `20260515000000_trip_activities_external_ref.sql` so `external_ref` can dedupe OSM imports per stop. Attribution: **ODbL** for OSM data (shown in the UI). Fair use: do not hammer public instances; defaults use long server cache (`revalidate: 86400`).
 
 ## Contributors (commit attribution)
 
