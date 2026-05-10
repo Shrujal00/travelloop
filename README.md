@@ -30,6 +30,8 @@ Personalized travel planning made easy — **Next.js 16** (App Router) and **Sup
 
 Open [http://localhost:3000](http://localhost:3000). Auth: `/login`, `/signup`, `/forgot-password`. After sign-in, `/trips` lists trips once the `trips` migration has been applied.
 
+**Phase D (places on Build itinerary):** the builder uses a static ISO country list and server-side city search via [Photon](https://photon.komoot.io) (OpenStreetMap data). Results are cached on the server; you must be signed in to call `/api/places/search`. Optional env vars: `PHOTON_API_BASE_URL`, `PHOTON_USER_AGENT` (see `.env.example`).
+
 ## Contributors (commit attribution)
 
 | Area | GitHub | Git `user.name` / `user.email` |

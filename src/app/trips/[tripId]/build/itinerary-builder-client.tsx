@@ -1,5 +1,6 @@
 "use client";
 
+import { PlaceSearchFields } from "@/components/place-search-fields";
 import {
   addTripActivity,
   addTripStop,
@@ -28,7 +29,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { startTransition, useEffect, useMemo, useState } from "react";
 
 export type BuilderActivityRow = {
   id: string;
@@ -42,6 +43,11 @@ export type BuilderStopRow = {
   id: string;
   sort_order: number;
   city_name: string;
+  country: string | null;
+  region: string | null;
+  lat: number | null;
+  lng: number | null;
+  external_place_id: string | null;
   start_date: string | null;
   end_date: string | null;
   trip_activities: BuilderActivityRow[];
@@ -162,20 +168,20 @@ function SortableStopCard({
             <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
               City & dates
             </p>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <div className="sm:col-span-1">
-                <label className="text-xs font-medium text-stone-600" htmlFor={`city-${stop.id}`}>
-                  City
-                </label>
-                <input
-                  id={`city-${stop.id}`}
-                  name="city_name"
-                  required
-                  maxLength={200}
-                  defaultValue={stop.city_name}
-                  className={fieldClass}
-                />
-              </div>
+            <PlaceSearchFields
+              key={`${stop.id}-${stop.city_name}-${stop.country ?? ""}-${stop.external_place_id ?? ""}-${stop.lat ?? ""}-${stop.lng ?? ""}`}
+              inputId={`city-${stop.id}`}
+              countrySelectId={`country-${stop.id}`}
+              defaults={{
+                city_name: stop.city_name,
+                country: stop.country,
+                region: stop.region,
+                lat: stop.lat,
+                lng: stop.lng,
+                external_place_id: stop.external_place_id,
+              }}
+            />
+            <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="text-xs font-medium text-stone-600" htmlFor={`sd-${stop.id}`}>
                   Start
@@ -374,7 +380,7 @@ export function ItineraryBuilderClient({ trip }: { trip: BuilderTripPayload }) {
       sorted
         .map(
           (s) =>
-            `${s.id}:${s.sort_order}:${s.city_name}:${s.trip_activities.map((a) => a.id).join(".")}`
+            `${s.id}:${s.sort_order}:${s.city_name}:${s.country ?? ""}:${s.external_place_id ?? ""}:${s.trip_activities.map((a) => a.id).join(".")}`
         )
         .join("|"),
     [sorted]
@@ -383,7 +389,9 @@ export function ItineraryBuilderClient({ trip }: { trip: BuilderTripPayload }) {
   const [items, setItems] = useState<BuilderStopRow[]>(sorted);
 
   useEffect(() => {
-    setItems([...trip.trip_stops].sort((a, b) => a.sort_order - b.sort_order));
+    startTransition(() => {
+      setItems([...trip.trip_stops].sort((a, b) => a.sort_order - b.sort_order));
+    });
   }, [stopsVersion, trip.trip_stops]);
 
   const sensors = useSensors(
@@ -447,12 +455,18 @@ export function ItineraryBuilderClient({ trip }: { trip: BuilderTripPayload }) {
         ) : (
           <form action={addTripStop} className="mx-auto mt-5 max-w-md space-y-4">
             <input type="hidden" name="trip_id" value={trip.id} />
-            <div>
-              <label className="text-xs font-medium text-stone-600" htmlFor="new-city">
-                City
-              </label>
-              <input id="new-city" name="city_name" required maxLength={200} className={fieldClass} />
-            </div>
+            <PlaceSearchFields
+              inputId="new-city"
+              countrySelectId="new-country"
+              defaults={{
+                city_name: "",
+                country: null,
+                region: null,
+                lat: null,
+                lng: null,
+                external_place_id: null,
+              }}
+            />
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="text-xs font-medium text-stone-600" htmlFor="new-sd">

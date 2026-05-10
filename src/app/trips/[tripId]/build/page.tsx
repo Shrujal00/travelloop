@@ -58,6 +58,11 @@ export default async function TripBuildPage({
         id,
         sort_order,
         city_name,
+        country,
+        region,
+        lat,
+        lng,
+        external_place_id,
         start_date,
         end_date,
         trip_activities (
@@ -113,10 +118,33 @@ export default async function TripBuildPage({
           category: ar.category != null ? String(ar.category) : null,
         };
       });
+      const latRaw = s.lat;
+      const lngRaw = s.lng;
+      const lat =
+        latRaw == null || latRaw === ""
+          ? null
+          : typeof latRaw === "number"
+            ? latRaw
+            : Number(latRaw);
+      const lng =
+        lngRaw == null || lngRaw === ""
+          ? null
+          : typeof lngRaw === "number"
+            ? lngRaw
+            : Number(lngRaw);
+
       return {
         id: String(s.id),
         sort_order: typeof s.sort_order === "number" ? s.sort_order : Number(s.sort_order ?? 0),
         city_name: String(s.city_name ?? ""),
+        country: (() => {
+          const c = s.country != null ? String(s.country).trim().toUpperCase() : "";
+          return /^[A-Z]{2}$/.test(c) ? c : null;
+        })(),
+        region: s.region != null ? String(s.region) : null,
+        lat: Number.isFinite(lat) ? lat : null,
+        lng: Number.isFinite(lng) ? lng : null,
+        external_place_id: s.external_place_id != null ? String(s.external_place_id) : null,
         start_date: s.start_date != null ? String(s.start_date) : null,
         end_date: s.end_date != null ? String(s.end_date) : null,
         trip_activities: sortActivities(trip_activities),
@@ -142,8 +170,9 @@ export default async function TripBuildPage({
         Stops & activities
       </h1>
       <p className="mt-2 max-w-xl text-sm text-stone-600">
-        Drag the handle to reorder cities. Dates must stay inside the trip window. Each stop can
-        list activities with optional time, cost, and category.
+        Drag the handle to reorder stops. Pick a country to narrow search, type a city, then choose
+        a match to save coordinates (OpenStreetMap via Photon). Dates must stay inside the trip
+        window. Each stop can list activities with optional time, cost, and category.
       </p>
 
       {errorMessage ? (

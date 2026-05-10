@@ -143,7 +143,11 @@ export function buildItineraryDays(
         if (b.starts_at) return 1;
         return a.stop_sort_order - b.stop_sort_order || a.title.localeCompare(b.title);
       })
-      .map(({ bucket: _b, ...rest }) => rest);
+      .map((row) => {
+        const { bucket, ...rest } = row;
+        void bucket;
+        return rest;
+      });
 
     return {
       date,

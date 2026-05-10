@@ -23,6 +23,9 @@
 # misc
 .DS_Store
 *.pem
+
+# Local post-hackathon checklist (share outside Git; do not commit)
+POLISHING.local.md
 # common env filename typos (never commit secrets)
 e.nv
 
