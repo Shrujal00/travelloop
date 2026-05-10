@@ -1,4 +1,3 @@
-import { createTrip } from "@/lib/trips/actions";
 import { getVerifiedEmail } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
@@ -44,7 +43,7 @@ export default async function TripsPage({
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900">
       <header className="border-b border-stone-200 bg-white px-6 py-4">
-        <div className="mx-auto flex max-w-3xl items-center justify-between">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
           <Link
             href="/"
             className="[font-family:var(--font-travel-display)] text-2xl text-[var(--travel-charcoal)]"
@@ -65,16 +64,26 @@ export default async function TripsPage({
         </div>
       </header>
       <main className="mx-auto max-w-3xl px-6 py-12">
-        <p className="text-sm font-medium uppercase tracking-wide text-stone-500">
-          Your trips
-        </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
-          Itineraries
-        </h1>
-        <p className="mt-3 max-w-xl text-stone-600">
-          Name a trip to get started. Stops, dates, and budgets will attach here
-          in a later milestone.
-        </p>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-wide text-stone-500">
+              Your trips
+            </p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
+              Itineraries
+            </h1>
+            <p className="mt-3 max-w-xl text-stone-600">
+              Open the create screen to add a name; more fields from the
+              wireframe ship when the schema does.
+            </p>
+          </div>
+          <Link
+            href="/trips/new"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-[var(--travel-accent)] px-5 py-2.5 text-sm font-semibold text-stone-900 shadow-sm transition hover:brightness-[0.97]"
+          >
+            New trip
+          </Link>
+        </div>
 
         {decodedError ? (
           <p
@@ -90,41 +99,11 @@ export default async function TripsPage({
             className="mt-6 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900"
             role="status"
           >
-            Could not load trips. Run the <code className="rounded bg-amber-100/80 px-1">trips</code>{" "}
-            migration in Supabase (see README), then refresh.
+            Could not load trips. Run the{" "}
+            <code className="rounded bg-amber-100/80 px-1">trips</code> migration
+            in Supabase (see README), then refresh.
           </p>
         ) : null}
-
-        <section
-          id="new-trip"
-          className="mt-8 scroll-mt-24 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm"
-        >
-          <h2 className="text-lg font-semibold text-[var(--travel-charcoal)]">
-            New trip
-          </h2>
-          <form action={createTrip} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="min-w-0 flex-1">
-              <label htmlFor="trip-title" className="sr-only">
-                Trip name
-              </label>
-              <input
-                id="trip-title"
-                name="title"
-                type="text"
-                required
-                maxLength={200}
-                placeholder="e.g. Japan spring 2026"
-                className="w-full rounded-lg border border-stone-300 px-3 py-2.5 text-stone-900 shadow-sm outline-none ring-[var(--travel-accent)] focus:border-[var(--travel-accent)] focus:ring-2"
-              />
-            </div>
-            <button
-              type="submit"
-              className="shrink-0 rounded-lg bg-[var(--travel-accent)] px-5 py-2.5 text-sm font-semibold text-stone-900 shadow-sm hover:brightness-95"
-            >
-              Create trip
-            </button>
-          </form>
-        </section>
 
         <section className="mt-10">
           <h2 className="text-lg font-semibold text-[var(--travel-charcoal)]">
@@ -132,7 +111,14 @@ export default async function TripsPage({
           </h2>
           {!listFailed && trips.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-dashed border-stone-300 bg-white/80 px-6 py-14 text-center text-stone-500">
-              No trips yet — add one above.
+              No trips yet —{" "}
+              <Link
+                href="/trips/new"
+                className="font-semibold text-[var(--travel-charcoal)] underline-offset-4 hover:underline"
+              >
+                create one
+              </Link>
+              .
             </div>
           ) : null}
           {!listFailed && trips.length > 0 ? (

@@ -79,6 +79,11 @@ export default function SignupPage() {
       <p className="mt-1.5 text-sm leading-relaxed text-stone-600">
         Start planning trips with Traveloop.
       </p>
+      <p className="mt-4 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-xs leading-relaxed text-stone-600">
+        <span className="font-semibold text-stone-800">This build:</span>{" "}
+        email + password only (like a trimmed wireframe). No phone, social
+        sign-in, or profile fields yet.
+      </p>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-5" noValidate>
         {submitError ? (

@@ -117,7 +117,7 @@ export default async function Home() {
               </p>
             </div>
             <Link
-              href="/trips#new-trip"
+              href="/trips/new"
               className="mt-4 inline-flex shrink-0 items-center justify-center rounded-lg bg-[var(--travel-accent)] px-5 py-3 text-sm font-semibold text-stone-900 shadow-sm transition hover:brightness-[0.97] sm:mt-0"
             >
               Plan new trip
@@ -133,7 +133,7 @@ export default async function Home() {
                 <div className="mt-4 rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-12 text-center text-stone-500">
                   No trips yet. Use{" "}
                   <strong className="text-stone-700">Plan new trip</strong> to
-                  add your first one.
+                  open the create screen (name only for now).
                 </div>
               ) : (
                 <ul className="mt-4 space-y-3">

@@ -64,6 +64,10 @@ export function LoginForm() {
       <p className="mt-1.5 text-sm leading-relaxed text-stone-600">
         Sign in to manage your travel plans.
       </p>
+      <p className="mt-4 rounded-xl border border-stone-200 bg-stone-50 px-4 py-3 text-xs leading-relaxed text-stone-600">
+        <span className="font-semibold text-stone-800">This build:</span>{" "}
+        email and password only — same scope as our sign-up flow.
+      </p>
 
       <form onSubmit={onSubmit} className="mt-8 space-y-5" noValidate>
         {submitError ? (
