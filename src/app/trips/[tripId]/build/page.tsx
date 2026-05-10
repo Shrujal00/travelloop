@@ -163,16 +163,11 @@ export default async function TripBuildPage({
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
-      <p className="text-sm font-medium uppercase tracking-wide text-stone-500">
-        Screen 5 · Build itinerary
-      </p>
-      <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
+      <h1 className="text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
         Stops & activities
       </h1>
       <p className="mt-2 max-w-xl text-sm text-stone-600">
-        Drag the handle to reorder stops. Pick a country to narrow search, type a city, then choose
-        a match to save coordinates (OpenStreetMap via Photon). Dates must stay inside the trip
-        window. Each stop can list activities with optional time, cost, and category.
+        Reorder stops with the handle, edit places and dates, and add activities for each leg.
       </p>
 
       {errorMessage ? (

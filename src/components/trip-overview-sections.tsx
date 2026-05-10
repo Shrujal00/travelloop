@@ -57,9 +57,6 @@ export function TripOverviewSections({
           Open day-by-day view →
         </Link>
       </div>
-      <p className="mt-1 text-sm text-stone-600">
-        Each stop is a leg of your trip — expand to see activities you added in the builder.
-      </p>
       <ol className="mt-4 space-y-3">
         {stops.map((s, i) => {
           const budget = sumCosts(s.activities);

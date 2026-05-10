@@ -65,10 +65,7 @@ export default async function NewTripPage({
 
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
         <div className="rounded-[1.75rem] border-2 border-stone-800/15 bg-white p-5 shadow-[5px_5px_0_0_rgb(214,211,209)] sm:p-8">
-          <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">
-            Screen 4 · New trip
-          </p>
-          <h1 className="mt-1 text-2xl font-bold tracking-tight text-[var(--travel-charcoal)] sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight text-[var(--travel-charcoal)] sm:text-3xl">
             Plan a new trip
           </h1>
 
@@ -100,10 +97,6 @@ export default async function NewTripPage({
 
             <div>
               <p className="block text-sm font-semibold text-stone-800">Destination</p>
-              <p className="mt-1 text-xs text-stone-600">
-                Same country + city search as Build itinerary (Photon). Your first stop inherits these
-                coordinates.
-              </p>
               <div className="mt-3">
                 <NewTripPlaceFields />
               </div>

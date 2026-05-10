@@ -17,7 +17,7 @@ export function EditTripPlaceFields({ defaults }: { defaults: PlaceFieldDefaults
       labels={{
         country: "Country filter",
         city: "Place (destination)",
-        countryHint: "Narrows Photon search. Pick a result to refresh coordinates on your primary stop.",
+        countryHint: "Optional. Pick a search result to save coordinates.",
       }}
       defaults={defaults}
     />

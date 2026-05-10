@@ -15,7 +15,7 @@ export function NewTripPlaceFields() {
       labels={{
         country: "Country filter",
         city: "Destination (city or place)",
-        countryHint: "Narrows Photon search. Pick a result to save map data on your first stop.",
+        countryHint: "Optional. Pick a search result to save coordinates.",
       }}
       defaults={{
         city_name: "",
