@@ -7,10 +7,17 @@ alter table public.trips
 alter table public.trips
   add column if not exists public_slug text null;
 
+-- Safe to re-run: plain ADD CONSTRAINT fails if the object already exists (e.g. partial run in SQL Editor).
+alter table public.trips
+  drop constraint if exists trips_public_slug_fmt;
+
 alter table public.trips
   add constraint trips_public_slug_fmt check (
     public_slug is null or public_slug ~ '^[a-z0-9]{12,40}$'
   );
+
+alter table public.trips
+  drop constraint if exists trips_public_requires_slug;
 
 alter table public.trips
   add constraint trips_public_requires_slug check (
@@ -25,12 +32,16 @@ comment on column public.trips.is_public is 'When true, anon/authenticated users
 comment on column public.trips.public_slug is 'Opaque URL segment for /p/[slug]; unique when set.';
 
 -- Anyone can read public trips (omit user_id in API selects for privacy).
+drop policy if exists "trips_select_public" on public.trips;
+
 create policy "trips_select_public"
   on public.trips for select
   to anon, authenticated
   using (is_public = true);
 
 -- Stops for public trips
+drop policy if exists "trip_stops_select_public" on public.trip_stops;
+
 create policy "trip_stops_select_public"
   on public.trip_stops for select
   to anon, authenticated
@@ -44,6 +55,8 @@ create policy "trip_stops_select_public"
   );
 
 -- Activities on stops belonging to public trips
+drop policy if exists "trip_activities_select_public" on public.trip_activities;
+
 create policy "trip_activities_select_public"
   on public.trip_activities for select
   to anon, authenticated
