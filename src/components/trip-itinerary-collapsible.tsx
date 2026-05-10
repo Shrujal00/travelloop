@@ -12,6 +12,10 @@ export type DashboardTripForCollapsible = {
   end_date: string | null;
   created_at: string;
   trip_stops?: unknown;
+  is_public?: boolean | null;
+  public_slug?: string | null;
+  /** Absolute URL for guests (computed on the server for the dashboard). */
+  share_url?: string | null;
 };
 
 type NormalizedStop = {
@@ -88,10 +92,15 @@ export function TripItineraryCollapsible({
               {stops.length} {stops.length === 1 ? "section" : "sections"}
             </span>
           </p>
-          <p className="mt-2">
+          <p className="mt-2 flex flex-wrap items-center gap-2">
             <span className="inline-flex rounded-full bg-amber-100/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-950">
               {lifeLabel}
             </span>
+            {trip.is_public && trip.share_url ? (
+              <span className="inline-flex rounded-full bg-teal-100/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-teal-950">
+                Public link
+              </span>
+            ) : null}
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-2">

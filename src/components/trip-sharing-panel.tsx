@@ -11,10 +11,13 @@ export function TripSharingPanel({
   tripId,
   isPublic,
   shareUrl,
+  shareReturn = "trip",
 }: {
   tripId: string;
   isPublic: boolean;
   shareUrl: string | null;
+  /** `dashboard` posts hidden `share_return` so server actions redirect back to `/trips`. */
+  shareReturn?: "trip" | "dashboard";
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -58,6 +61,9 @@ export function TripSharingPanel({
       {!isPublic ? (
         <form action={enablePublicTripSharing} className="mt-4">
           <input type="hidden" name="trip_id" value={tripId} />
+          {shareReturn === "dashboard" ? (
+            <input type="hidden" name="share_return" value="dashboard" />
+          ) : null}
           <button
             type="submit"
             className="rounded-lg bg-[var(--travel-accent)] px-4 py-2.5 text-sm font-semibold text-stone-900 shadow-sm transition hover:brightness-[0.97]"
@@ -96,6 +102,9 @@ export function TripSharingPanel({
           <div className="flex flex-wrap items-center gap-3 border-t border-stone-100 pt-4">
             <form action={regeneratePublicTripSlug}>
               <input type="hidden" name="trip_id" value={tripId} />
+              {shareReturn === "dashboard" ? (
+                <input type="hidden" name="share_return" value="dashboard" />
+              ) : null}
               <button
                 type="submit"
                 className="rounded-lg border border-stone-300 bg-white px-3 py-2 text-xs font-semibold text-stone-800 transition hover:bg-stone-50"
@@ -105,6 +114,9 @@ export function TripSharingPanel({
             </form>
             <form action={disablePublicTripSharing}>
               <input type="hidden" name="trip_id" value={tripId} />
+              {shareReturn === "dashboard" ? (
+                <input type="hidden" name="share_return" value="dashboard" />
+              ) : null}
               <button
                 type="submit"
                 className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-900 transition hover:bg-red-100"

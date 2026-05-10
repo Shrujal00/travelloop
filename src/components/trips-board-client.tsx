@@ -1,13 +1,14 @@
 "use client";
 
 import { TripDeleteForm } from "@/app/trips/trip-delete-form";
+import { TripBoardShareControls } from "@/components/trip-board-share-controls";
 import {
   TripItineraryCollapsible,
   type DashboardTripForCollapsible,
 } from "@/components/trip-itinerary-collapsible";
 import { tripLifecycleBucket, type TripLifecycle } from "@/lib/trips/trip-lifecycle";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const controlClass =
   "rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 outline-none focus:border-[var(--travel-accent)] focus:ring-1 focus:ring-[var(--travel-accent)]/40";
@@ -104,8 +105,17 @@ function Column({
           </p>
         ) : (
           trips.map((t) => (
-            <div key={t.id} className="overflow-hidden rounded-xl border border-stone-200 bg-stone-50/40">
+            <div
+              key={t.id}
+              data-trip-card={t.id}
+              className="overflow-hidden rounded-xl border border-stone-200 bg-stone-50/40"
+            >
               <TripItineraryCollapsible trip={t} todayIso={todayIso} />
+              <TripBoardShareControls
+                tripId={t.id}
+                isPublic={Boolean(t.is_public)}
+                shareUrl={t.share_url ?? null}
+              />
               <TripRowActions tripId={t.id} />
             </div>
           ))
@@ -118,14 +128,24 @@ function Column({
 export function TripsBoardClient({
   trips,
   todayIso,
+  highlightTripId,
 }: {
   trips: DashboardTripForCollapsible[];
   todayIso: string;
+  /** After sharing actions from the board, scroll this trip card into view. */
+  highlightTripId?: string | null;
 }) {
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<SortKey>("created_desc");
   const [group, setGroup] = useState<GroupKey>("status");
   const [filter, setFilter] = useState<FilterKey>("all");
+
+  useEffect(() => {
+    if (!highlightTripId?.trim()) return;
+    const id = highlightTripId.trim();
+    const el = document.querySelector(`[data-trip-card="${id}"]`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightTripId]);
 
   const filteredSorted = useMemo(() => {
     let list = trips.filter((t) => matchesSearch(t, search));
@@ -241,8 +261,17 @@ export function TripsBoardClient({
             </li>
           ) : (
             filteredSorted.map((t) => (
-              <li key={t.id} className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
+              <li
+                key={t.id}
+                data-trip-card={t.id}
+                className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm"
+              >
                 <TripItineraryCollapsible trip={t} todayIso={todayIso} />
+                <TripBoardShareControls
+                  tripId={t.id}
+                  isPublic={Boolean(t.is_public)}
+                  shareUrl={t.share_url ?? null}
+                />
                 <TripRowActions tripId={t.id} />
               </li>
             ))
