@@ -4,6 +4,7 @@ import { getVerifiedSession } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { revalidateTripPaths } from "@/lib/trips/revalidate-trip";
 
 function parseISODate(raw: unknown): string | null {
   if (typeof raw !== "string") return null;
@@ -23,15 +24,6 @@ function parseTripId(raw: unknown): string | null {
     return null;
   }
   return id;
-}
-
-function revalidateTripPaths(tripId: string) {
-  revalidatePath("/trips");
-  revalidatePath("/trips/new");
-  revalidatePath("/");
-  revalidatePath(`/trips/${tripId}`);
-  revalidatePath(`/trips/${tripId}/edit`);
-  revalidatePath(`/trips/${tripId}/build`);
 }
 
 export async function createTrip(formData: FormData) {
