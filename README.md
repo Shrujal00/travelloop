@@ -24,7 +24,7 @@ Personalized travel planning made easy — **Next.js 16** (App Router) and **Sup
    npm run dev
    ```
 
-Open [http://localhost:3000](http://localhost:3000). Auth routes: `/login`, `/signup`, `/forgot-password`.
+Open [http://localhost:3000](http://localhost:3000). Auth: `/login`, `/signup`, `/forgot-password`. After sign-in, `/trips` is a protected planner stub.
 
 ## Contributors (commit attribution)
 

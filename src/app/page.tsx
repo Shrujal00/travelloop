@@ -1,19 +1,9 @@
-import { createClient } from "@/lib/supabase/server";
+import { getVerifiedEmail } from "@/lib/auth/session";
 import { signOut } from "@/lib/auth/actions";
 import Link from "next/link";
 
 export default async function Home() {
-  let email: string | null = null;
-  try {
-    const supabase = await createClient();
-    const { data } = await supabase.auth.getClaims();
-    const claims = data?.claims;
-    if (claims && typeof claims.email === "string") {
-      email = claims.email;
-    }
-  } catch {
-    /* Missing env during local setup */
-  }
+  const email = await getVerifiedEmail();
 
   return (
     <div className="flex min-h-screen flex-col bg-stone-50 text-stone-900">
@@ -54,10 +44,18 @@ export default async function Home() {
           Plan multi-city trips with confidence
         </h1>
         {email ? (
-          <p className="mt-6 max-w-md text-stone-600">
-            Signed in as <span className="font-medium text-stone-800">{email}</span>.
-            Trip planning UI comes next.
-          </p>
+          <div className="mt-6 flex max-w-md flex-col items-center gap-4 text-stone-600">
+            <p>
+              Signed in as{" "}
+              <span className="font-medium text-stone-800">{email}</span>.
+            </p>
+            <Link
+              href="/trips"
+              className="inline-flex rounded-lg bg-[var(--travel-accent)] px-6 py-3 text-base font-semibold text-stone-900 shadow-sm hover:brightness-95"
+            >
+              Open your trips
+            </Link>
+          </div>
         ) : (
           <p className="mt-6 max-w-md text-stone-600">
             Sign in to save itineraries, share plans, and track budgets.

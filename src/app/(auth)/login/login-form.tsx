@@ -7,6 +7,11 @@ import { useState } from "react";
 
 const emailOk = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
 
+function safeNextPath(raw: string | null): string {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//")) return "/";
+  return raw;
+}
+
 export function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -47,7 +52,7 @@ export function LoginForm() {
       setSubmitError(error.message);
       return;
     }
-    router.push("/");
+    router.push(safeNextPath(searchParams.get("next")));
     router.refresh();
   }
 
