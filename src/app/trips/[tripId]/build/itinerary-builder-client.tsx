@@ -533,6 +533,13 @@ export function ItineraryBuilderClient({ trip }: { trip: BuilderTripPayload }) {
         >
           Budget
         </Link>
+        {" · "}
+        <Link
+          href={`/trips/${trip.id}/packing`}
+          className="font-medium text-stone-700 underline-offset-4 hover:underline"
+        >
+          Packing
+        </Link>
       </p>
     </div>
   );

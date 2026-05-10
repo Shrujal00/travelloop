@@ -192,6 +192,13 @@ export default async function TripBudgetPage({
         >
           Itinerary builder
         </Link>
+        {" · "}
+        <Link
+          href={`/trips/${tripId}/packing`}
+          className="font-semibold text-stone-800 underline-offset-4 hover:underline"
+        >
+          Packing
+        </Link>
       </p>
 
       {!ts || !te ? (
