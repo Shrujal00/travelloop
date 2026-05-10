@@ -36,6 +36,16 @@ async function fetchTripSlug(supabase: Awaited<ReturnType<typeof createClient>>,
   return data?.public_slug as string | null | undefined;
 }
 
+/** Hidden field `share_return=dashboard` redirects to `/trips?…` (trip board); otherwise trip overview. */
+function redirectAfterShareAction(formData: FormData, tripId: string, params: Record<string, string>) {
+  const qs = new URLSearchParams(params).toString();
+  const suffix = qs ? `?${qs}` : "";
+  if (formData.get("share_return") === "dashboard") {
+    redirect(`/trips${suffix}`);
+  }
+  redirect(`/trips/${tripId}${suffix}`);
+}
+
 export async function enablePublicTripSharing(formData: FormData) {
   const session = await getVerifiedSession();
   if (!session) redirect("/login");
@@ -57,21 +67,22 @@ export async function enablePublicTripSharing(formData: FormData) {
 
     if (!error && updated?.id) {
       revalidateTripPaths(tripId, null, slug);
-      redirect(`/trips/${tripId}?share=enabled`);
+      redirectAfterShareAction(formData, tripId, {
+        share: "enabled",
+        for_trip: tripId,
+      });
     }
 
     if (error?.code !== "23505") {
-      redirect(
-        `/trips/${tripId}?share_error=` +
-          encodeURIComponent(error?.message ?? "Could not enable sharing.")
-      );
+      redirectAfterShareAction(formData, tripId, {
+        share_error: error?.message ?? "Could not enable sharing.",
+      });
     }
   }
 
-  redirect(
-    `/trips/${tripId}?share_error=` +
-      encodeURIComponent("Could not allocate a unique link — try again.")
-  );
+  redirectAfterShareAction(formData, tripId, {
+    share_error: "Could not allocate a unique link — try again.",
+  });
 }
 
 export async function disablePublicTripSharing(formData: FormData) {
@@ -93,19 +104,19 @@ export async function disablePublicTripSharing(formData: FormData) {
     .maybeSingle();
 
   if (error) {
-    redirect(
-      `/trips/${tripId}?share_error=` + encodeURIComponent(error.message ?? "Could not update sharing.")
-    );
+    redirectAfterShareAction(formData, tripId, {
+      share_error: error.message ?? "Could not update sharing.",
+    });
   }
 
   if (!updated?.id) {
-    redirect(
-      `/trips/${tripId}?share_error=` + encodeURIComponent("Trip not found or access denied.")
-    );
+    redirectAfterShareAction(formData, tripId, {
+      share_error: "Trip not found or access denied.",
+    });
   }
 
   revalidateTripPaths(tripId, null, oldSlug ?? null);
-  redirect(`/trips/${tripId}?share=disabled`);
+  redirectAfterShareAction(formData, tripId, { share: "disabled", for_trip: tripId });
 }
 
 export async function regeneratePublicTripSlug(formData: FormData) {
@@ -125,13 +136,13 @@ export async function regeneratePublicTripSlug(formData: FormData) {
     .maybeSingle();
 
   if (readErr || !row?.is_public) {
-    redirect(
-      `/trips/${tripId}?share_error=` +
-        encodeURIComponent("Turn sharing on before rotating the link.")
-    );
+    redirectAfterShareAction(formData, tripId, {
+      share_error: "Turn sharing on before rotating the link.",
+    });
   }
 
-  const previousSlug = row.public_slug as string | null;
+  const ownerRow = row!;
+  const previousSlug = ownerRow.public_slug as string | null;
 
   for (let attempt = 0; attempt < 10; attempt++) {
     const slug = newShareSlug();
@@ -147,21 +158,22 @@ export async function regeneratePublicTripSlug(formData: FormData) {
     if (!error && updated?.id) {
       revalidateTripPaths(tripId, null, previousSlug);
       revalidateTripPaths(tripId, null, slug);
-      redirect(`/trips/${tripId}?share=rotated`);
+      redirectAfterShareAction(formData, tripId, {
+        share: "rotated",
+        for_trip: tripId,
+      });
     }
 
     if (error?.code !== "23505") {
-      redirect(
-        `/trips/${tripId}?share_error=` +
-          encodeURIComponent(error?.message ?? "Could not rotate link.")
-      );
+      redirectAfterShareAction(formData, tripId, {
+        share_error: error?.message ?? "Could not rotate link.",
+      });
     }
   }
 
-  redirect(
-    `/trips/${tripId}?share_error=` +
-      encodeURIComponent("Could not allocate a unique link — try again.")
-  );
+  redirectAfterShareAction(formData, tripId, {
+    share_error: "Could not allocate a unique link — try again.",
+  });
 }
 
 type StopRow = {

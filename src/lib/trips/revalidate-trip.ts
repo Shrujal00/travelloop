@@ -14,6 +14,7 @@ export function revalidateTripPaths(
   revalidatePath(`/trips/${tripId}/itinerary`);
   revalidatePath(`/trips/${tripId}/budget`);
   revalidatePath(`/trips/${tripId}/packing`);
+  revalidatePath(`/trips/${tripId}/notes`);
   if (stopId) {
     revalidatePath(`/trips/${tripId}/stops/${stopId}/discover`);
   }
