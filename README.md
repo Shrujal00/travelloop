@@ -19,7 +19,7 @@ Personalized travel planning made easy — **Next.js 16** (App Router) and **Sup
    - Site URL: `http://localhost:3000` (and your production URL when deployed)
    - Redirect URLs: `http://localhost:3000/**`
 
-4. **Database (run in Supabase SQL Editor):** open each file under `supabase/migrations/` **in filename order** (`profiles` → `trips` → `trip_place_dates` → `trip_stops_activities` → `profiles_display_avatar` → `trip_activities_external_ref` → `trip_budget`) and execute the SQL once per project so RLS-backed tables and columns exist.
+4. **Database (run in Supabase SQL Editor):** open each file under `supabase/migrations/` **in filename order** (`profiles` → `trips` → `trip_place_dates` → `trip_stops_activities` → `profiles_display_avatar` → `trip_activities_external_ref` → `trip_budget` → `packing_items`) and execute the SQL once per project so RLS-backed tables and columns exist.
 
 5. Install and run:
 
@@ -35,6 +35,8 @@ Open [http://localhost:3000](http://localhost:3000). Auth: `/login`, `/signup`, 
 **Phase E (activity discover):** per-stop **Browse activity ideas** opens `/trips/[tripId]/stops/[stopId]/discover` — server-cached POI hints from a public [Overpass](https://wiki.openstreetmap.org/wiki/Overpass_API) interpreter (tiny radius queries; identify your app via `OVERPASS_USER_AGENT`), optional nearby [Wikipedia](https://en.wikipedia.org/wiki/Wikipedia:API) titles (geosearch only; no extracts), and one-tap add into `trip_activities`. If a stop has no saved coordinates, Photon geocodes the city name once, then Overpass runs from that centroid. Apply migration `20260515000000_trip_activities_external_ref.sql` so `external_ref` can dedupe OSM imports per stop. Fair use: do not hammer public instances; defaults use long server cache (`revalidate: 86400`).
 
 **Phase F (budget):** `/trips/[tripId]/budget` rolls up **activity costs** from the builder plus **`trip_expenses`** rows you log (transport, stay, meals, activities, other). Optional **`daily_budget_cap`** on **Edit trip** sets a soft daily average threshold — Budget warns when spend/day exceeds it. Apply migration `20260516000000_trip_budget.sql`.
+
+**Phase G (packing):** `/trips/[tripId]/packing` is a per-trip checklist (**documents**, **clothing**, **toiletries**, **electronics**, **other**): add/remove rows, mark packed, **Uncheck all** (sets every row unpacked without deleting), or **Clear list** (delete all rows). Apply migration `20260518000000_packing_items.sql`.
 
 ## Contributors (commit attribution)
 
