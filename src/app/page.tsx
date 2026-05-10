@@ -94,6 +94,12 @@ export default async function Home() {
                   All trips
                 </Link>
                 <Link
+                  href="/community"
+                  className="font-medium text-stone-600 underline-offset-4 hover:text-[var(--travel-charcoal)] hover:underline"
+                >
+                  Community
+                </Link>
+                <Link
                   href="/profile"
                   className="font-medium text-stone-600 underline-offset-4 hover:text-[var(--travel-charcoal)] hover:underline"
                 >
@@ -162,9 +168,6 @@ export default async function Home() {
               <h2 className="text-lg font-semibold text-[var(--travel-charcoal)]">
                 Recent trips
               </h2>
-              <p className="mt-1 text-sm text-stone-500">
-                Collapsible cards — same data as after you save in Build itinerary.
-              </p>
               {recentTrips.length === 0 ? (
                 <div className="mt-4 rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-12 text-center text-stone-500">
                   No trips yet. Use{" "}
@@ -187,9 +190,6 @@ export default async function Home() {
                 <h2 className="text-lg font-semibold text-[var(--travel-charcoal)]">
                   Budget highlights
                 </h2>
-                <p className="mt-1 text-sm text-stone-500">
-                  Estimates roll up once you add stops and nightly rates.
-                </p>
                 <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
                   <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
                     <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
@@ -198,9 +198,6 @@ export default async function Home() {
                     <p className="mt-1 text-2xl font-semibold text-[var(--travel-charcoal)]">
                       —
                     </p>
-                    <p className="mt-1 text-xs text-stone-500">
-                      Connect trips to see totals
-                    </p>
                   </div>
                   <div className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
                     <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
@@ -208,9 +205,6 @@ export default async function Home() {
                     </p>
                     <p className="mt-1 text-2xl font-semibold text-[var(--travel-charcoal)]">
                       —
-                    </p>
-                    <p className="mt-1 text-xs text-stone-500">
-                      Per-diem preview coming soon
                     </p>
                   </div>
                 </div>

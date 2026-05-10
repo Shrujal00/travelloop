@@ -103,6 +103,12 @@ export default async function ProfilePage({
               All trips
             </Link>
             <Link
+              href="/community"
+              className="font-medium text-stone-600 underline-offset-4 hover:text-[var(--travel-charcoal)] hover:underline"
+            >
+              Community
+            </Link>
+            <Link
               href="/"
               className="font-medium text-stone-600 underline-offset-4 hover:text-[var(--travel-charcoal)] hover:underline"
             >
@@ -198,7 +204,6 @@ export default async function ProfilePage({
 
         <section className="mt-12">
           <h2 className="text-lg font-semibold text-[var(--travel-charcoal)]">Preplanned trips</h2>
-          <p className="mt-1 text-sm text-stone-500">Upcoming or in progress — same wireframe as your trip board.</p>
           {preplanned.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-dashed border-stone-300 bg-white px-6 py-10 text-center text-sm text-stone-500">
               No preplanned trips yet.{" "}

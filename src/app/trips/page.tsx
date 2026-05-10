@@ -67,6 +67,12 @@ export default async function TripsPage({
           </Link>
           <div className="flex flex-wrap items-center justify-end gap-3 text-sm">
             <Link
+              href="/community"
+              className="font-medium text-stone-600 underline-offset-4 hover:text-[var(--travel-charcoal)] hover:underline"
+            >
+              Community
+            </Link>
+            <Link
               href="/profile"
               className="font-medium text-stone-600 underline-offset-4 hover:text-[var(--travel-charcoal)] hover:underline"
             >
@@ -91,10 +97,6 @@ export default async function TripsPage({
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
               Itineraries
             </h1>
-            <p className="mt-2 max-w-2xl text-sm text-stone-600">
-              Search, filter, and sort. Group by status to see ongoing, upcoming, and completed trips side
-              by side.
-            </p>
           </div>
           <Link
             href="/trips/new"
