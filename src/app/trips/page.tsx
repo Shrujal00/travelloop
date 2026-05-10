@@ -1,8 +1,11 @@
+import { TripDeleteForm } from "@/app/trips/trip-delete-form";
 import { getVerifiedEmail } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+
+type TripStopCount = { count: number };
 
 type TripRow = {
   id: string;
@@ -11,6 +14,7 @@ type TripRow = {
   start_date: string | null;
   end_date: string | null;
   created_at: string;
+  trip_stops?: TripStopCount[] | null;
 };
 
 export default async function TripsPage({
@@ -37,7 +41,7 @@ export default async function TripsPage({
   const supabase = await createClient();
   const { data: tripsRaw, error: listError } = await supabase
     .from("trips")
-    .select("id, title, place, start_date, end_date, created_at")
+    .select("id, title, place, start_date, end_date, created_at, trip_stops(count)")
     .order("created_at", { ascending: false });
 
   const trips = (tripsRaw ?? []) as TripRow[];
@@ -76,8 +80,9 @@ export default async function TripsPage({
               Itineraries
             </h1>
             <p className="mt-3 max-w-xl text-stone-600">
-              Plan dates and a destination on the create screen. Run the latest
-              trip migration if saves fail.
+              Open a trip for details, edit dates and place, or remove a plan. Run
+              migrations through <code className="rounded bg-stone-100 px-1">trip_stops_activities</code>{" "}
+              if lists fail to load.
             </p>
           </div>
           <Link
@@ -126,33 +131,64 @@ export default async function TripsPage({
           ) : null}
           {!listFailed && trips.length > 0 ? (
             <ul className="mt-4 space-y-3">
-              {trips.map((t) => (
-                <li
-                  key={t.id}
-                  className="flex flex-col gap-1 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <span className="block truncate font-medium text-stone-800">
-                      {t.place || t.title}
-                    </span>
-                    {t.start_date && t.end_date ? (
-                      <span className="text-xs text-stone-500">
-                        {t.start_date} → {t.end_date}
-                      </span>
-                    ) : null}
-                  </div>
-                  <time
-                    dateTime={t.created_at}
-                    className="shrink-0 text-xs text-stone-500"
+              {trips.map((t) => {
+                const rawCount = t.trip_stops?.[0]?.count;
+                const stopCount =
+                  typeof rawCount === "number"
+                    ? rawCount
+                    : typeof rawCount === "string"
+                      ? Number(rawCount)
+                      : t.place
+                        ? 1
+                        : 0;
+                return (
+                  <li
+                    key={t.id}
+                    className="flex flex-col gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-stretch sm:justify-between"
                   >
-                    {new Date(t.created_at).toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </time>
-                </li>
-              ))}
+                    <div className="min-w-0 flex-1">
+                      <span className="block truncate font-medium text-stone-800">
+                        {t.place || t.title}
+                      </span>
+                      {t.start_date && t.end_date ? (
+                        <span className="mt-0.5 block text-xs text-stone-500">
+                          {t.start_date} → {t.end_date}
+                        </span>
+                      ) : null}
+                      <span className="mt-1 block text-xs text-stone-500">
+                        {stopCount} destination{stopCount === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                    <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                      <time
+                        dateTime={t.created_at}
+                        className="text-xs text-stone-500 sm:text-right"
+                      >
+                        {new Date(t.created_at).toLocaleDateString(undefined, {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </time>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Link
+                          href={`/trips/${t.id}`}
+                          className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-medium text-stone-800 transition hover:bg-stone-50"
+                        >
+                          View
+                        </Link>
+                        <Link
+                          href={`/trips/${t.id}/edit`}
+                          className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-medium text-stone-800 transition hover:bg-stone-50"
+                        >
+                          Edit
+                        </Link>
+                        <TripDeleteForm tripId={t.id} />
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
           ) : null}
         </section>
