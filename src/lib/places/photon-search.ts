@@ -40,6 +40,27 @@ function rankOsmValue(v: string | undefined): number {
   return PLACE_RANK[v] ?? 40;
 }
 
+/** POIs users search by name (monuments, museums, parks); Photon returns these as tourism/historic/etc., not `place`. */
+const POI_OSM_KEYS = new Set(["tourism", "historic", "leisure", "natural"]);
+
+function rankPhotonFeature(p: PhotonProps): number {
+  const key = p.osm_key ?? "";
+  const val = p.osm_value ?? "";
+  if (key === "place") return rankOsmValue(val);
+  if (key === "boundary" && val === "administrative") return rankOsmValue(val);
+  if (POI_OSM_KEYS.has(key)) {
+    return 12;
+  }
+  return 99;
+}
+
+function isPhotonPoiFeature(p: PhotonProps): boolean {
+  const key = p.osm_key ?? "";
+  if (!POI_OSM_KEYS.has(key)) return false;
+  const name = (p.name ?? p.city ?? "").trim();
+  return Boolean(name);
+}
+
 function buildSubtitle(p: PhotonProps, cityName: string): string {
   const parts: string[] = [];
   if (p.state && p.state !== cityName) parts.push(p.state);
@@ -57,7 +78,13 @@ function featureToHit(f: PhotonFeature): PlaceSearchHit | null {
   const p = f.properties ?? {};
   const osmKey = p.osm_key ?? "";
   const osmValue = p.osm_value ?? "";
-  if (osmKey !== "place" && osmKey !== "boundary") {
+
+  const isPlaceLike =
+    osmKey === "place" ||
+    (osmKey === "boundary" && osmValue === "administrative");
+  const isPoi = isPhotonPoiFeature(p);
+
+  if (!isPlaceLike && !isPoi) {
     return null;
   }
   if (osmKey === "boundary" && osmValue !== "administrative") {
@@ -144,7 +171,7 @@ export async function searchPlacesPhoton(
     if (cc && p.countrycode?.trim().toUpperCase() !== cc) continue;
     const hit = featureToHit(f);
     if (!hit) continue;
-    pairs.push({ hit, rank: rankOsmValue(p.osm_value) });
+    pairs.push({ hit, rank: rankPhotonFeature(p) });
   }
 
   pairs.sort((a, b) => {

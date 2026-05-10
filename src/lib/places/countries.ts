@@ -19,3 +19,11 @@ export function isValidIso3166Alpha2(code: string): boolean {
   const names = getNames("en", { select: "official" }) as Record<string, string>;
   return Boolean(names[code.toUpperCase()]);
 }
+
+/** English official country name for ISO alpha-2, or null when unknown / unset. */
+export function englishOfficialCountryName(code: string | null | undefined): string | null {
+  const c = typeof code === "string" ? code.trim().toUpperCase() : "";
+  if (!c || !isValidIso3166Alpha2(c)) return null;
+  const names = getNames("en", { select: "official" }) as Record<string, string>;
+  return names[c] ?? null;
+}
