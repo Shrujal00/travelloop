@@ -1,6 +1,10 @@
 import { revalidatePath } from "next/cache";
 
-export function revalidateTripPaths(tripId: string, stopId?: string | null) {
+export function revalidateTripPaths(
+  tripId: string,
+  stopId?: string | null,
+  publicSlug?: string | null
+) {
   revalidatePath("/trips");
   revalidatePath("/trips/new");
   revalidatePath("/");
@@ -12,5 +16,8 @@ export function revalidateTripPaths(tripId: string, stopId?: string | null) {
   revalidatePath(`/trips/${tripId}/packing`);
   if (stopId) {
     revalidatePath(`/trips/${tripId}/stops/${stopId}/discover`);
+  }
+  if (publicSlug) {
+    revalidatePath(`/p/${publicSlug}`);
   }
 }
