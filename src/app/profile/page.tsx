@@ -114,6 +114,12 @@ export default async function ProfilePage({
             >
               Dashboard
             </Link>
+            <Link
+              href="/settings"
+              className="font-medium text-stone-600 underline-offset-4 hover:text-[var(--travel-charcoal)] hover:underline"
+            >
+              Settings
+            </Link>
             <form action={signOut}>
               <button
                 type="submit"
