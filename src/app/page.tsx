@@ -2,9 +2,10 @@ import {
   TripItineraryCollapsible,
   type DashboardTripForCollapsible,
 } from "@/components/trip-itinerary-collapsible";
-import { getVerifiedEmail } from "@/lib/auth/session";
+import { getVerifiedEmail, getVerifiedSession } from "@/lib/auth/session";
 import { signOut } from "@/lib/auth/actions";
 import { createClient } from "@/lib/supabase/server";
+import { todayIsoUtc } from "@/lib/trips/trip-lifecycle";
 import Link from "next/link";
 
 const RECOMMENDED = [
@@ -27,11 +28,24 @@ const RECOMMENDED = [
 
 export default async function Home() {
   const email = await getVerifiedEmail();
+  const session = await getVerifiedSession();
+  const todayIso = todayIsoUtc();
 
   let recentTrips: DashboardTripForCollapsible[] = [];
-  if (email) {
+  let welcomeName = email?.split("@")[0] ?? "traveler";
+  if (email && session) {
     try {
       const supabase = await createClient();
+      const { data: profileRow, error: profileErr } = await supabase
+        .from("profiles")
+        .select("display_name")
+        .eq("id", session.userId)
+        .maybeSingle();
+      if (!profileErr) {
+        const dn = profileRow?.display_name?.trim();
+        if (dn) welcomeName = dn;
+      }
+
       const { data } = await supabase
         .from("trips")
         .select(
@@ -60,8 +74,6 @@ export default async function Home() {
     }
   }
 
-  const welcomeName = email?.split("@")[0] ?? "traveler";
-
   return (
     <div className="flex min-h-screen flex-col bg-stone-50 text-stone-900">
       <header className="border-b border-stone-200 bg-white px-6 py-4">
@@ -80,6 +92,12 @@ export default async function Home() {
                   className="font-medium text-stone-600 underline-offset-4 hover:text-[var(--travel-charcoal)] hover:underline"
                 >
                   All trips
+                </Link>
+                <Link
+                  href="/profile"
+                  className="font-medium text-stone-600 underline-offset-4 hover:text-[var(--travel-charcoal)] hover:underline"
+                >
+                  Profile
                 </Link>
                 <form action={signOut}>
                   <button
@@ -157,7 +175,7 @@ export default async function Home() {
                 <ul className="mt-4 space-y-3">
                   {recentTrips.map((t) => (
                     <li key={t.id}>
-                      <TripItineraryCollapsible trip={t} />
+                      <TripItineraryCollapsible trip={t} todayIso={todayIso} />
                     </li>
                   ))}
                 </ul>

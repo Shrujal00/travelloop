@@ -1,11 +1,9 @@
-import { TripDeleteForm } from "@/app/trips/trip-delete-form";
-import {
-  TripItineraryCollapsible,
-  type DashboardTripForCollapsible,
-} from "@/components/trip-itinerary-collapsible";
+import { TripsBoardClient } from "@/components/trips-board-client";
+import type { DashboardTripForCollapsible } from "@/components/trip-itinerary-collapsible";
 import { getVerifiedEmail } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/lib/auth/actions";
+import { todayIsoUtc } from "@/lib/trips/trip-lifecycle";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -55,18 +53,25 @@ export default async function TripsPage({
 
   const trips = (tripsRaw ?? []) as DashboardTripForCollapsible[];
   const listFailed = Boolean(listError);
+  const todayIso = todayIsoUtc();
 
   return (
     <div className="min-h-screen bg-stone-50 text-stone-900">
       <header className="border-b border-stone-200 bg-white px-6 py-4">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4">
           <Link
             href="/"
             className="[font-family:var(--font-travel-display)] text-2xl text-[var(--travel-charcoal)]"
           >
             Traveloop
           </Link>
-          <div className="flex items-center gap-3 text-sm">
+          <div className="flex flex-wrap items-center justify-end gap-3 text-sm">
+            <Link
+              href="/profile"
+              className="font-medium text-stone-600 underline-offset-4 hover:text-[var(--travel-charcoal)] hover:underline"
+            >
+              Profile
+            </Link>
             <span className="hidden text-stone-600 sm:inline">{email}</span>
             <form action={signOut}>
               <button
@@ -79,15 +84,17 @@ export default async function TripsPage({
           </div>
         </div>
       </header>
-      <main className="mx-auto max-w-3xl px-6 py-12">
+      <main className="mx-auto max-w-6xl px-6 py-12">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-stone-500">
-              Your trips
-            </p>
+            <p className="text-sm font-medium uppercase tracking-wide text-stone-500">Your trips</p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">
               Itineraries
             </h1>
+            <p className="mt-2 max-w-2xl text-sm text-stone-600">
+              Search, filter, and sort. Group by status to see ongoing, upcoming, and completed trips side
+              by side.
+            </p>
           </div>
           <Link
             href="/trips/new"
@@ -118,12 +125,7 @@ export default async function TripsPage({
         ) : null}
 
         <section className="mt-10">
-          <h2 className="text-lg font-semibold text-[var(--travel-charcoal)]">
-            Your list
-          </h2>
-          <p className="mt-1 text-sm text-stone-500">
-            Each trip is a collapsible card so new stops show up here after you save.
-          </p>
+          <h2 className="text-lg font-semibold text-[var(--travel-charcoal)]">Trip board</h2>
           {!listFailed && trips.length === 0 ? (
             <div className="mt-4 rounded-2xl border border-dashed border-stone-300 bg-white/80 px-6 py-14 text-center text-stone-500">
               No trips yet —{" "}
@@ -137,28 +139,9 @@ export default async function TripsPage({
             </div>
           ) : null}
           {!listFailed && trips.length > 0 ? (
-            <ul className="mt-4 space-y-4">
-              {trips.map((t) => (
-                <li key={t.id} className="space-y-2">
-                  <TripItineraryCollapsible trip={t} />
-                  <div className="flex flex-wrap justify-end gap-2">
-                    <Link
-                      href={`/trips/${t.id}`}
-                      className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-medium text-stone-800 transition hover:bg-stone-50"
-                    >
-                      View
-                    </Link>
-                    <Link
-                      href={`/trips/${t.id}/edit`}
-                      className="rounded-lg border border-stone-300 bg-white px-2.5 py-1 text-xs font-medium text-stone-800 transition hover:bg-stone-50"
-                    >
-                      Edit
-                    </Link>
-                    <TripDeleteForm tripId={t.id} />
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <div className="mt-4">
+              <TripsBoardClient trips={trips} todayIso={todayIso} />
+            </div>
           ) : null}
         </section>
 

@@ -1,3 +1,6 @@
+"use client";
+
+import { tripLifecycleBucket, tripLifecycleLabel, todayIsoUtc } from "@/lib/trips/trip-lifecycle";
 import Link from "next/link";
 
 /** Shape returned from Supabase nested `trip_stops` + `trip_activities` selects. */
@@ -54,13 +57,23 @@ function normalizeStops(raw: unknown): NormalizedStop[] {
   return rows.sort((a, b) => a.sort_order - b.sort_order);
 }
 
-export function TripItineraryCollapsible({ trip }: { trip: DashboardTripForCollapsible }) {
+export function TripItineraryCollapsible({
+  trip,
+  todayIso,
+}: {
+  trip: DashboardTripForCollapsible;
+  /** UTC `YYYY-MM-DD`; when omitted, computed on the client at render time. */
+  todayIso?: string;
+}) {
   const stops = normalizeStops(trip.trip_stops);
   const displayName = trip.place?.trim() || trip.title;
   const tripRange =
     trip.start_date && trip.end_date
       ? `${dateLabel(trip.start_date)} to ${dateLabel(trip.end_date)}`
       : "Dates not set";
+  const iso = todayIso ?? todayIsoUtc();
+  const life = tripLifecycleBucket(trip.start_date, trip.end_date, iso);
+  const lifeLabel = tripLifecycleLabel(life);
 
   return (
     <details className="group rounded-2xl border border-stone-200 bg-white shadow-sm open:shadow-md">
@@ -73,6 +86,11 @@ export function TripItineraryCollapsible({ trip }: { trip: DashboardTripForColla
             {" · "}
             <span className="font-medium text-stone-700">
               {stops.length} {stops.length === 1 ? "section" : "sections"}
+            </span>
+          </p>
+          <p className="mt-2">
+            <span className="inline-flex rounded-full bg-amber-100/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-950">
+              {lifeLabel}
             </span>
           </p>
         </div>
