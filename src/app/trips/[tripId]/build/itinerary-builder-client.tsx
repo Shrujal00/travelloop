@@ -56,6 +56,14 @@ export type BuilderTripPayload = {
   trip_stops: BuilderStopRow[];
 };
 
+/** `input type="date"` min/max/value must be `yyyy-MM-dd`; ISO timestamps break some browsers. */
+function toDateInputValue(raw: string | null | undefined): string | undefined {
+  if (raw == null) return undefined;
+  const s = String(raw).trim();
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  return m && /^\d{4}-\d{2}-\d{2}$/.test(m[1]) ? m[1] : undefined;
+}
+
 function formatForDatetimeLocal(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);
@@ -76,8 +84,8 @@ function SortableStopCard({
 }: {
   stop: BuilderStopRow;
   tripId: string;
-  tripStart: string | null;
-  tripEnd: string | null;
+  tripStart: string | undefined;
+  tripEnd: string | undefined;
   canDeleteStop: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -136,9 +144,9 @@ function SortableStopCard({
                   name="start_date"
                   type="date"
                   required
-                  min={tripStart ?? undefined}
-                  max={tripEnd ?? undefined}
-                  defaultValue={stop.start_date ?? ""}
+                  min={tripStart}
+                  max={tripEnd}
+                  defaultValue={toDateInputValue(stop.start_date) ?? ""}
                   className={fieldClass}
                 />
               </div>
@@ -151,9 +159,9 @@ function SortableStopCard({
                   name="end_date"
                   type="date"
                   required
-                  min={tripStart ?? undefined}
-                  max={tripEnd ?? undefined}
-                  defaultValue={stop.end_date ?? ""}
+                  min={tripStart}
+                  max={tripEnd}
+                  defaultValue={toDateInputValue(stop.end_date) ?? ""}
                   className={fieldClass}
                 />
               </div>
@@ -358,9 +366,9 @@ export function ItineraryBuilderClient({ trip }: { trip: BuilderTripPayload }) {
     router.refresh();
   }
 
-  const tripStart = trip.start_date;
-  const tripEnd = trip.end_date;
-  const canAddStop = Boolean(tripStart && tripEnd);
+  const tripStart = toDateInputValue(trip.start_date);
+  const tripEnd = toDateInputValue(trip.end_date);
+  const canAddStop = Boolean(tripStart && tripEnd && tripEnd >= tripStart);
 
   return (
     <div className="space-y-8">
@@ -410,8 +418,8 @@ export function ItineraryBuilderClient({ trip }: { trip: BuilderTripPayload }) {
                   name="start_date"
                   type="date"
                   required
-                  min={tripStart ?? undefined}
-                  max={tripEnd ?? undefined}
+                  min={tripStart}
+                  max={tripEnd}
                   className={fieldClass}
                 />
               </div>
@@ -424,8 +432,8 @@ export function ItineraryBuilderClient({ trip }: { trip: BuilderTripPayload }) {
                   name="end_date"
                   type="date"
                   required
-                  min={tripStart ?? undefined}
-                  max={tripEnd ?? undefined}
+                  min={tripStart}
+                  max={tripEnd}
                   className={fieldClass}
                 />
               </div>
