@@ -65,6 +65,16 @@ function activityBucketYmd(
   return clampYmd(stopStart, tripStart, tripEnd);
 }
 
+/** Calendar day (yyyy-mm-dd) an activity’s cost attributes to for budget (matches itinerary day buckets). */
+export function tripBudgetDayForActivity(
+  activity: Pick<SourceActivity, "starts_at">,
+  stop: Pick<SourceStop, "start_date" | "end_date">,
+  tripStart: string,
+  tripEnd: string
+): string {
+  return activityBucketYmd(activity as SourceActivity, stop as SourceStop, tripStart, tripEnd);
+}
+
 function stopCoversDay(day: string, stop: SourceStop, tripStart: string, tripEnd: string): boolean {
   const s = clampYmd(ymdFromAny(stop.start_date) ?? tripStart, tripStart, tripEnd);
   const e = clampYmd(ymdFromAny(stop.end_date) ?? tripEnd, tripStart, tripEnd);

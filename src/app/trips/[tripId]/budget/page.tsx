@@ -2,7 +2,9 @@ import { BudgetTripClient, type BudgetExpenseRow } from "./budget-trip-client";
 import {
   breakdownRows,
   computeBudgetRollup,
+  computeDailySpendByDay,
   tripInclusiveDayCount,
+  type BudgetStopForDaily,
   type TripExpenseCategory,
 } from "@/lib/trips/budget-rollups";
 import { createClient } from "@/lib/supabase/server";
@@ -64,7 +66,9 @@ export default async function TripBudgetPage({
       end_date,
       daily_budget_cap,
       trip_stops (
-        trip_activities ( cost )
+        start_date,
+        end_date,
+        trip_activities ( cost, starts_at )
       ),
       trip_expenses (
         id,
@@ -178,6 +182,50 @@ export default async function TripBudgetPage({
 
   const breakdown = breakdownRows(rollup);
 
+  const stopsForDaily: BudgetStopForDaily[] = [];
+  const stopsRaw = row.trip_stops;
+  if (Array.isArray(stopsRaw)) {
+    for (const s of stopsRaw) {
+      const sr = s as Record<string, unknown>;
+      const acts = sr.trip_activities;
+      const activities: BudgetStopForDaily["activities"] = [];
+      if (Array.isArray(acts)) {
+        for (const a of acts) {
+          const ar = a as Record<string, unknown>;
+          const costRaw = ar.cost;
+          const cost =
+            costRaw == null || costRaw === ""
+              ? null
+              : typeof costRaw === "number"
+                ? costRaw
+                : Number(costRaw);
+          activities.push({
+            cost: Number.isFinite(cost ?? NaN) ? (cost as number) : null,
+            starts_at: ar.starts_at != null ? String(ar.starts_at) : null,
+          });
+        }
+      }
+      stopsForDaily.push({
+        start_date: sr.start_date != null ? String(sr.start_date).slice(0, 10) : null,
+        end_date: sr.end_date != null ? String(sr.end_date).slice(0, 10) : null,
+        activities,
+      });
+    }
+  }
+
+  const dailySpend =
+    ts.length >= 10 && te.length >= 10
+      ? computeDailySpendByDay({
+          tripStartYmd: ts,
+          tripEndYmd: te,
+          stops: stopsForDaily,
+          expenses: expenseRows.map((e) => ({
+            expense_date: e.expense_date,
+            amount: e.amount,
+          })),
+        })
+      : [];
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-10">
       <h1 className="text-3xl font-semibold tracking-tight text-[var(--travel-charcoal)]">Budget</h1>
@@ -218,6 +266,7 @@ export default async function TripBudgetPage({
           dailyBudgetCap={dailyBudgetCapNorm}
           rollup={rollup}
           breakdown={breakdown}
+          dailySpend={dailySpend}
           expenses={expenseRows}
           initialError={initialError}
         />

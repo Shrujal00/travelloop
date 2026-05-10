@@ -1,3 +1,5 @@
+import { eachDateInclusiveUTC, tripBudgetDayForActivity } from "@/lib/trips/itinerary-day-buckets";
+
 export type TripExpenseCategory = "transport" | "stay" | "meals" | "activities" | "other";
 
 export const EXPENSE_CATEGORY_LABELS: Record<TripExpenseCategory, string> = {
@@ -92,4 +94,47 @@ export function breakdownRows(r: BudgetRollup): BudgetBreakdownRow[] {
     { key: "other", label: EXPENSE_CATEGORY_LABELS.other, amount: r.other },
   ];
   return rows.filter((x) => x.amount >= 0.005);
+}
+
+export type DailySpendRow = { date: string; total: number };
+
+export type BudgetStopForDaily = {
+  start_date: string | null;
+  end_date: string | null;
+  activities: { cost: number | null; starts_at: string | null }[];
+};
+
+/** Per calendar trip day spend: itinerary activity costs (bucketed like itinerary view) + expenses on that date. */
+export function computeDailySpendByDay(params: {
+  tripStartYmd: string;
+  tripEndYmd: string;
+  stops: BudgetStopForDaily[];
+  expenses: { expense_date: string; amount: number }[];
+}): DailySpendRow[] {
+  const days = eachDateInclusiveUTC(params.tripStartYmd, params.tripEndYmd);
+  const totals = new Map<string, number>();
+  for (const d of days) totals.set(d, 0);
+
+  for (const stop of params.stops) {
+    for (const a of stop.activities) {
+      const raw = a.cost;
+      const n = typeof raw === "number" ? raw : raw != null ? Number(raw) : NaN;
+      if (!Number.isFinite(n) || n <= 0) continue;
+      const cost = Math.round(n * 100) / 100;
+      const day = tripBudgetDayForActivity(a, stop, params.tripStartYmd, params.tripEndYmd);
+      const prev = totals.get(day);
+      if (prev === undefined) continue;
+      totals.set(day, Math.round((prev + cost) * 100) / 100);
+    }
+  }
+
+  for (const e of params.expenses) {
+    const ymd = String(e.expense_date).trim().slice(0, 10);
+    if (!totals.has(ymd)) continue;
+    const amt = Number.isFinite(e.amount) ? Math.round(e.amount * 100) / 100 : 0;
+    if (amt <= 0) continue;
+    totals.set(ymd, Math.round(((totals.get(ymd) ?? 0) + amt) * 100) / 100);
+  }
+
+  return days.map((d) => ({ date: d, total: totals.get(d) ?? 0 }));
 }
