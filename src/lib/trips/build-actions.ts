@@ -368,7 +368,88 @@ export async function addTripActivity(formData: FormData) {
     redirect(`/trips/${tripId}/build?error=` + encodeURIComponent(error.message));
   }
 
-  revalidateTripPaths(tripId);
+  revalidateTripPaths(tripId, stopId);
+  redirect(`/trips/${tripId}/build`);
+}
+
+export async function addSuggestedActivity(formData: FormData) {
+  const session = await getVerifiedSession();
+  if (!session) {
+    redirect("/login?next=/trips");
+  }
+
+  const tripId = parseUuid(formData.get("trip_id"));
+  const stopId = parseUuid(formData.get("stop_id"));
+  if (!tripId || !stopId) {
+    redirect("/trips?error=" + encodeURIComponent("Invalid trip or stop."));
+  }
+
+  const titleRaw = formData.get("title");
+  const title = typeof titleRaw === "string" ? titleRaw.trim().slice(0, 300) : "";
+  if (!title) {
+    redirect(
+      `/trips/${tripId}/stops/${stopId}/discover?error=` +
+        encodeURIComponent("Activity title is required.")
+    );
+  }
+
+  const catRaw = formData.get("category");
+  const category =
+    typeof catRaw === "string" && catRaw.trim() ? catRaw.trim().slice(0, 120) : null;
+
+  const extRaw = formData.get("external_ref");
+  const external_ref =
+    typeof extRaw === "string" && extRaw.trim() ? extRaw.trim().slice(0, 120) : null;
+
+  const supabase = await createClient();
+  const owned = await loadOwnedTrip(supabase, tripId, session.userId);
+  if (!owned.ok) {
+    redirect("/trips?error=" + encodeURIComponent(owned.message));
+  }
+
+  const { data: stopRow, error: stopErr } = await supabase
+    .from("trip_stops")
+    .select("id")
+    .eq("id", stopId)
+    .eq("trip_id", tripId)
+    .maybeSingle();
+
+  if (stopErr || !stopRow) {
+    redirect(`/trips/${tripId}/build?error=` + encodeURIComponent("Stop not found for this trip."));
+  }
+
+  if (external_ref) {
+    const { data: dup } = await supabase
+      .from("trip_activities")
+      .select("id")
+      .eq("trip_stop_id", stopId)
+      .eq("external_ref", external_ref)
+      .maybeSingle();
+
+    if (dup) {
+      redirect(
+        `/trips/${tripId}/stops/${stopId}/discover?error=` +
+          encodeURIComponent("This place is already on your itinerary for this stop.")
+      );
+    }
+  }
+
+  const { error } = await supabase.from("trip_activities").insert({
+    trip_stop_id: stopId,
+    title,
+    starts_at: null,
+    cost: null,
+    category,
+    external_ref,
+  });
+
+  if (error) {
+    redirect(
+      `/trips/${tripId}/stops/${stopId}/discover?error=` + encodeURIComponent(error.message)
+    );
+  }
+
+  revalidateTripPaths(tripId, stopId);
   redirect(`/trips/${tripId}/build`);
 }
 
