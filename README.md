@@ -19,7 +19,7 @@ Personalized travel planning made easy — **Next.js 16** (App Router) and **Sup
    - Site URL: `http://localhost:3000` (and your production URL when deployed)
    - Redirect URLs: `http://localhost:3000/**`
 
-4. **Database (run in Supabase SQL Editor):** open each file under `supabase/migrations/` in order (profiles, then trips) and execute the SQL once per project so RLS-backed tables exist.
+4. **Database (run in Supabase SQL Editor):** open each file under `supabase/migrations/` **in filename order** (`profiles` → `trips` → `trip_place_dates`) and execute the SQL once per project so RLS-backed tables and columns exist.
 
 5. Install and run:
 
